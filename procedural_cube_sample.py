@@ -70,22 +70,25 @@ def makeSquare(x1, y1, z1, x2, y2, z2):
         vertex.addData3(x2, y2, z2)
         vertex.addData3(x1, y2, z2)
 
+        
         normal.addData3(normalized(2 * x1 - 1, 2 * y1 - 1, 2 * z1 - 1))
         normal.addData3(normalized(2 * x2 - 1, 2 * y1 - 1, 2 * z1 - 1))
         normal.addData3(normalized(2 * x2 - 1, 2 * y2 - 1, 2 * z2 - 1))
         normal.addData3(normalized(2 * x1 - 1, 2 * y2 - 1, 2 * z2 - 1))
-
+        
     else:
         vertex.addData3(x1, y1, z1)
         vertex.addData3(x2, y2, z1)
         vertex.addData3(x2, y2, z2)
         vertex.addData3(x1, y1, z2)
 
+        
         normal.addData3(normalized(2 * x1 - 1, 2 * y1 - 1, 2 * z1 - 1))
         normal.addData3(normalized(2 * x2 - 1, 2 * y2 - 1, 2 * z1 - 1))
         normal.addData3(normalized(2 * x2 - 1, 2 * y2 - 1, 2 * z2 - 1))
         normal.addData3(normalized(2 * x1 - 1, 2 * y1 - 1, 2 * z2 - 1))
-
+        
+        
     # adding different colors to the vertex for visibility
     color.addData4f(1.0, 0.0, 0.0, 1.0)
     color.addData4f(0.0, 1.0, 0.0, 1.0)

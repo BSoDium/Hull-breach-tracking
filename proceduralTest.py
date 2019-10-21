@@ -2,14 +2,18 @@ from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 
+# this is a tutorial, and a test at the same time
+
 class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
 
-        # insert code here
+        # create an empty GeomVertexArrayFormat
         array = GeomVertexArrayFormat()
+        # add 3 vertex columns
         array.addColumn("vertex", 3, Geom.NTFloat32, Geom.CPoint)
 
+        format = GeomVertexFormat.getV3n3cpt2()
         vdata = GeomVertexData('MetalPlate',format,Geom.UHStatic)
         vdata.setNumRows(4)
         vertex = GeomVertexWriter(vdata, 'vertex')
