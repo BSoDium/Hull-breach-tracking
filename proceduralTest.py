@@ -1,13 +1,24 @@
 from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
+import numpy as np # first time I'm using that crappy lib for game dev
 
 # this is a tutorial, and a test at the same time
 
+def TupleSum(args):
+    '''
+    concatenates tuples inside lists
+    '''
+    S=()
+    for x in args:
+        S+=x
+    return S
+
+
 class testApp(ShowBase):
     def __init__(self):
-        self.doubleFaceTriangle()
-        self.singleFaceRectangle(10,5,5,2.5,(0,0,0))
+        #self.doubleFaceTriangle()
+        self.singleFaceRectangle_tristrip(10,5,5,2,(0,0,0))
         return None
     
     def doubleFaceTriangle(self):
@@ -27,7 +38,7 @@ class testApp(ShowBase):
         #or you can use the single line definition:
         #format = GeomVertexFormat.getV3()
         
-        vdata = GeomVertexData('MetalPlate',format, Geom.UHStatic)
+        vdata = GeomVertexData('triangle',format, Geom.UHStatic)
         vdata.setNumRows(4) # specify the number of rows (points I guess)
 
         # now we need to create several geomvertexwriters
@@ -63,9 +74,39 @@ class testApp(ShowBase):
 
         return None
     
-    def singleFaceRectangle(self,Vlenght,Vwidth,length,width,cornercoord):
+    def singleFaceRectangle_tristrip(self,Vlenght,Vwidth,length,width,cornercoord): 
+        '''
+        creates a triangulated rectangle 
+        '''
+        VertexCount = Vlenght*Vwidth 
         array = GeomVertexArrayFormat()
-        array.add_column('vertex',3, Geom.NTFloat32, Geom.CPoint)
+        array.add_column('vertex',3, Geom.NTFloat32, Geom.CPoint) # we'll work only with vertex coordinates rn, I don't want to mess with lighting and shit
+        # I'm leaving gaps because I still suck and I'm scared of getting lost
+        format = GeomVertexFormat.getV3() # calling the format this way makes it already predefined
+        LocalVdata = GeomVertexData('DynamicPlate',format,Geom.UH_static)
+        LocalVdata.setNumRows(VertexCount)
+        # some useless spacing again
+        vertex = GeomVertexWriter(LocalVdata,'vertex')
+
+        #LSpacing , WSpacing = length/Vlenght , width/Vwidth  # not necessary since we're using numpy to calculate coordinates
+        LCoord , WCoord = np.linspace(-length/2,length/2,Vlenght) , np.linspace(-width/2,width/2,Vwidth)
+        localZ = 0 # defines Z height of the plane (DynamicPlate)
+        for x in LCoord:
+            for y in WCoord:
+                vertex.addData3f(x,y,localZ)
+        # vertex data has been created, we still need the geomprimitives
+        #GPrimList = [] 
+        tempGeom = Geom(LocalVdata)
+        for i in range(Vwidth):
+            TempData = TupleSum([(x+i,x+i+1) for x in range(0,VertexCount,Vwidth)]) # this tuple contains the list of indexes for the vertices of each geomtristrip (one band at a time)
+            primitive = GeomTristrips(Geom.UHStatic)
+            for j in TempData:
+                primitive.add_vertex(j)
+            #GPrimList.append(primitive)
+            tempGeom.add_primitive(primitive)
+        node = GeomNode('gnode')
+        node.addGeom(tempGeom)
+        PlateNodePath = render.attachNewNode(node)
         return None
     
     def actualLoop(self,task):
