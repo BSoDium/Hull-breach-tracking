@@ -11,7 +11,8 @@ except:
 class mainApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
-        self.ParticleSystem = ParticleMesh(50,50,None)
+        self.ParticleSystem = ParticleMesh(20,50,70,70,None)
+        self.set_background_color(VBase3F(0,0,0))
         self.task_mgr.add(self.MainLoop,'ScreenUpdatingTask')
         return None
     def MainLoop(self,task):

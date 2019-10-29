@@ -6,12 +6,13 @@ import sys
 
 # this is a tutorial, and a test at the same time
 
-loadPrcFileData('','window-title Testing random stuff')
+loadPrcFileData('','window-title metal_physics beta')
 
 def TupleSum(args):
     '''
     concatenates tuples inside lists
     '''
+    assert type(args) == list # just in case u were still wondering
     S=()
     for x in args:
         S+=x
