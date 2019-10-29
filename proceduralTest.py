@@ -2,8 +2,11 @@ from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 import numpy as np # first time I'm using that crappy lib for game dev
+import sys
 
 # this is a tutorial, and a test at the same time
+
+loadPrcFileData('','window-title Testing random stuff')
 
 def TupleSum(args):
     '''
@@ -17,8 +20,11 @@ def TupleSum(args):
 
 class testApp(ShowBase):
     def __init__(self):
+        ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        self.singleFaceRectangle_tristrip(10,5,5,2,(0,0,0))
+        self.singleFaceRectangle_tristrip(100,100,30,30,(0,0,0))
+        self.set_background_color(VBase3F(0,0,0))
+        #self.CreateSomeLighting()
         return None
     
     def doubleFaceTriangle(self):
@@ -97,20 +103,50 @@ class testApp(ShowBase):
         # vertex data has been created, we still need the geomprimitives
         #GPrimList = [] 
         tempGeom = Geom(LocalVdata)
-        for i in range(Vwidth):
-            TempData = TupleSum([(x+i,x+i+1) for x in range(0,VertexCount,Vwidth)]) # this tuple contains the list of indexes for the vertices of each geomtristrip (one band at a time)
+        for i in range(Vwidth-1):
+            TempData = TupleSum([(x+i-1,x+i) for x in range(1,VertexCount,Vwidth)]) # this tuple contains the list of indexes for the vertices of each geomtristrip (one band at a time)
+            primitive = GeomTristrips(Geom.UHStatic)
+            for j in TempData:
+                #assert j < LocalVdata.get_num_rows() # debug
+                primitive.add_vertex(j)
+            primitive.close_primitive()
+            #GPrimList.append(primitive)
+            tempGeom.add_primitive(primitive)
+            '''
+            TempData = list(TempData)
+            TempData.reverse() # convert to list, reverse, then convert to tuple
+            TempData = tuple(TempData)
             primitive = GeomTristrips(Geom.UHStatic)
             for j in TempData:
                 primitive.add_vertex(j)
-            #GPrimList.append(primitive)
+            primitive.close_primitive()
             tempGeom.add_primitive(primitive)
+            '''
+            
         node = GeomNode('gnode')
         node.addGeom(tempGeom)
         PlateNodePath = render.attachNewNode(node)
+        PlateNodePath.setRenderModeWireframe()
+        PlateNodePath.setPos(0,0,0)
+        PlateNodePath.setHpr(0,180,0)
         return None
     
+    def CreateSomeLighting(self): # useless as we didn't define any normals on our meshes
+        plight = PointLight('plight01')
+        plight.setColor(VBase4(0.5,1,1,1))
+        plight.setAttenuation((0, 0, 1))
+        plnp = render.attachNewNode(plight)
+        plnp.setPos(0, 20, 1)
+        render.setLight(plnp)
+        return None
+
     def actualLoop(self,task):
+        pass
         return None
     
 test = testApp()
-test.run()
+try:
+    test.run()
+except:
+    print("SystemExit successfull, running exception...")
+    sys.exit(0) # raise no error if systemExit is raised
