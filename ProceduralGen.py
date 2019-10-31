@@ -51,17 +51,20 @@ class Generator:
             primitive.close_primitive()
             #GPrimList.append(primitive)
             tempGeom.add_primitive(primitive)
-            '''
+            
+            # kinda long code for such a simple thing
             TempData = list(TempData)
-            TempData.reverse() # convert to list, reverse, then convert to tuple
+            bufferData = list(tuple(TempData[:1])+TupleSum([(TempData[x],TempData[x-1]) for x in range(2,len(TempData),2)]))
+            if len(bufferData) != len(TempData):
+                bufferData.append(TempData[len(TempData)-1])
+            TempData = bufferData
             TempData = tuple(TempData)
             primitive = GeomTristrips(Geom.UHStatic)
             for j in TempData:
                 primitive.add_vertex(j)
             primitive.close_primitive()
-            tempGeom.add_primitive(primitive)
-            '''
-            
+            tempGeom.add_primitive(primitive)    
+
         node = GeomNode('gnode')
         node.addGeom(tempGeom)
         PlateNodePath = render.attachNewNode(node)

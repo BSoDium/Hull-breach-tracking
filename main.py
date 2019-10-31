@@ -3,7 +3,7 @@ try:
     from panda3d.core import *
     from direct.showbase.ShowBase import ShowBase
     from direct.task import Task
-    from ParticleField import *
+    from ParticleField import ParticleMesh
 except:
     print('failed to load modules')
     sys.exit()

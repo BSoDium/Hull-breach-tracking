@@ -6,6 +6,8 @@ import sys
 
 # this is a tutorial, and a test at the same time
 
+# tuple(L[:1])+TupleSum([(L[x],L[x-1]) for x in range(2,len(L),2)])
+
 loadPrcFileData('','window-title metal_physics beta')
 
 def TupleSum(args):
@@ -23,7 +25,7 @@ class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        self.singleFaceRectangle_tristrip(100,100,30,30,(0,0,0))
+        self.doubleFacedRectangle(40,40,30,30,(0,0,0))
         self.set_background_color(VBase3F(0,0,0))
         #self.CreateSomeLighting()
         return None
@@ -81,7 +83,7 @@ class testApp(ShowBase):
 
         return None
     
-    def singleFaceRectangle_tristrip(self,Vlenght,Vwidth,length,width,cornercoord): 
+    def doubleFacedRectangle(self,Vlenght,Vwidth,length,width,cornercoord): 
         '''
         creates a triangulated rectangle 
         '''
@@ -113,16 +115,20 @@ class testApp(ShowBase):
             primitive.close_primitive()
             #GPrimList.append(primitive)
             tempGeom.add_primitive(primitive)
-            '''
+            
+            # kinda long code for such a simple thing
             TempData = list(TempData)
-            TempData.reverse() # convert to list, reverse, then convert to tuple
+            bufferData = list(tuple(TempData[:1])+TupleSum([(TempData[x],TempData[x-1]) for x in range(2,len(TempData),2)]))
+            if len(bufferData) != len(TempData):
+                bufferData.append(TempData[len(TempData)-1])
+            TempData = bufferData
             TempData = tuple(TempData)
             primitive = GeomTristrips(Geom.UHStatic)
             for j in TempData:
                 primitive.add_vertex(j)
             primitive.close_primitive()
             tempGeom.add_primitive(primitive)
-            '''
+            
             
         node = GeomNode('gnode')
         node.addGeom(tempGeom)

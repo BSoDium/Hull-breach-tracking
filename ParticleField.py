@@ -2,6 +2,7 @@ from panda3d.core import * # needs to be improved later on (maybe)
 from ProceduralGen import *
 
 class ParticleMesh:
+    
     def __init__(self,l,w,Vl,Vw,extraArgs):
         '''
         ParticleMesh
@@ -13,5 +14,7 @@ class ParticleMesh:
         return None
 
     def update(self):
-        # updating function
+        '''
+        this is the function that should technically modify the surface accordingly
+        '''
         return None
