@@ -20,4 +20,8 @@ class mainApp(ShowBase):
         return None
 
 Simulation = mainApp()
-Simulation.run()
+try:
+    Simulation.run()
+except:
+    print("SystemExit successfull, running exception...")
+    sys.exit(0) # avoid systemExit error

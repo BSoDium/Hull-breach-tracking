@@ -156,4 +156,4 @@ try:
     test.run()
 except:
     print("SystemExit successfull, running exception...")
-    sys.exit(0) # raise no error if systemExit is raised
+    sys.exit(0) # avoid systemExit error

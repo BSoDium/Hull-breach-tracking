@@ -10,7 +10,7 @@ class ParticleMesh:
         this is a particle array, it reacts to stress, or other kinds of mechanical stress.
         Arguments needed: lenght and width in 3d units, length and width in amount of vertices (the four must be ints).
         '''
-        self.surface = Generator(l,w,Vl,Vw) 
+        self.surface = RectangleSurface(l,w,Vl,Vw) 
         return None
 
     def update(self):
