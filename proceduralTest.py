@@ -1,6 +1,7 @@
 from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
+from PIL import Image
 import numpy as np # first time I'm using that crappy lib for game dev
 import sys
 
@@ -25,7 +26,10 @@ class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        self.doubleFacedRectangle(40,40,30,30,(0,0,0))
+        im = Image.open('etna_topography_heighmap.png', 'r')
+        #im = Image.open('estuaire gironde nord Height Map (ASTER 30m).png','r')
+        zArray = im.getdata()
+        self.doubleFacedRectangle(1081,1081,400,400,(0,0,0),zArray)
         self.set_background_color(VBase3F(0,0,0))
         #self.CreateSomeLighting()
         return None
@@ -83,7 +87,7 @@ class testApp(ShowBase):
 
         return None
     
-    def doubleFacedRectangle(self,Vlenght,Vwidth,length,width,cornercoord): 
+    def doubleFacedRectangle(self,Vlenght,Vwidth,length,width,cornercoord,zArray): 
         '''
         creates a triangulated rectangle 
         '''
@@ -100,9 +104,10 @@ class testApp(ShowBase):
         #LSpacing , WSpacing = length/Vlenght , width/Vwidth  # not necessary since we're using numpy to calculate coordinates
         LCoord , WCoord = np.linspace(-length/2,length/2,Vlenght) , np.linspace(-width/2,width/2,Vwidth)
         localZ = 0 # defines Z height of the plane (DynamicPlate)
-        for x in LCoord:
-            for y in WCoord:
-                vertex.addData3f(x,y,localZ)
+        for x in range(len(LCoord)):
+            for y in range(len(WCoord)):
+                localZ = -(zArray.getpixel((x,y))-1000)/1000 # 1000 means above water level
+                vertex.addData3f(LCoord[x],WCoord[y],localZ)
         # vertex data has been created, we still need the geomprimitives
         #GPrimList = [] 
         tempGeom = Geom(LocalVdata)

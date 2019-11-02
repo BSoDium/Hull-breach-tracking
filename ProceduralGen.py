@@ -11,7 +11,7 @@ def TupleSum(args):
         S+=x
     return S
 
-class Generator:
+class RectangleSurface:
     def __init__(self,l,w,Vl,Vw):
         self.model = self.create(Vl,Vw,l,w)
         self.model.setPos(0,0,0)
