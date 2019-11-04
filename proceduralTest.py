@@ -9,7 +9,7 @@ import sys
 
 # tuple(L[:1])+TupleSum([(L[x],L[x-1]) for x in range(2,len(L),2)])
 
-loadPrcFileData('','window-title metal_physics beta')
+loadPrcFileData('','window-title procedural_gen beta')
 
 def TupleSum(args):
     '''
@@ -26,10 +26,12 @@ class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        im = Image.open('etna_topography_heighmap.png', 'r')
+        im = Image.open('voronoi_output01.png', 'r')
+        self.imageMode = im.mode
         #im = Image.open('estuaire gironde nord Height Map (ASTER 30m).png','r')
         zArray = im.getdata()
-        self.doubleFacedRectangle(1081,1081,400,400,(0,0,0),zArray)
+        IMwidth, IMheight = im.size
+        self.doubleFacedRectangle(IMwidth,IMheight,400,400,(0,0,0),zArray)
         self.set_background_color(VBase3F(0,0,0))
         #self.CreateSomeLighting()
         return None
@@ -106,7 +108,10 @@ class testApp(ShowBase):
         localZ = 0 # defines Z height of the plane (DynamicPlate)
         for x in range(len(LCoord)):
             for y in range(len(WCoord)):
-                localZ = -(zArray.getpixel((x,y))-1000)/1000 # 1000 means above water level
+                if self.imageMode == "I":
+                    localZ = -(zArray.getpixel((x,y))-1000)/1000 # 1000 means above water level
+                elif self.imageMode == "RGBA":
+                    localZ = zArray.getpixel((x,y))[0]/255 # between 0 and 1
                 vertex.addData3f(LCoord[x],WCoord[y],localZ)
         # vertex data has been created, we still need the geomprimitives
         #GPrimList = [] 
