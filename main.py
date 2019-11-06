@@ -14,9 +14,10 @@ class mainApp(ShowBase):
         self.ParticleSystem = ParticleMesh(20,50,70,70,None)
         self.set_background_color(VBase3F(0,0,0))
         self.task_mgr.add(self.MainLoop,'ScreenUpdatingTask')
+        self.dt = 0.001 # time step for the simulation (in seconds)
         return None
     def MainLoop(self,task):
-        self.ParticleSystem.update()
+        self.ParticleSystem.update(self.dt)
         return None
 
 Simulation = mainApp()

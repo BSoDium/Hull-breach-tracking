@@ -18,8 +18,7 @@ class Noise:
             self.table = self.voronoi(size,args)
         return None
 
-    def voronoi(self,size,args): # this version of the algorithm doesn't use
-        print("processing voronoi noise...") # tell the user something is actually happening 
+    def voronoi(self,size,args): # this version of the algorithm doesn't use 
         a,b = args[0],args[1] # args 0 and 1 are the limits for samplecount randomization
         sample_count = randrange(a,b)
         sizex, sizey= size[0], size[1]
@@ -27,7 +26,7 @@ class Noise:
         BufferTable = [[(0,0,0,1) for i in range(sizey)] for j in range(sizex)] # create an empty pic data
         CellList = [[randrange(0,sizex),randrange(0,sizey)] for i in range(sample_count)] 
         for y in range(len(BufferTable)):
-            print(str(y/len(BufferTable)*100)[:4]+"%",end='\r')
+            print("processing voronoi noise...  "+str(y/len(BufferTable)*100)[:4]+"% ",end='\r') # tell the user something is actually happening
             for x in range(len(BufferTable[y])): # we could just use BufferTable[0], same result
                 d = -1 # negative for "undefined"
                 for u in CellList:
@@ -45,15 +44,17 @@ class Noise:
 
         img = Image.new('RGBA', (sizex, sizey))
         img.putdata(output)
-        img.save('voronoi.png')
-        print("\n")
+        name = 'voronoi.png'
+        img.save(name)
+        print("\n",end='\r')
         print("done")
+        print("saved as "+ name)
 
-        return None
+        return output
     
     def lenght(self,posA,posB):
         dx, dy = posB[0] - posA[0], posB[1] - posA[1]
         return sqrt(dx**2 + dy**2)
 
 noise = Noise()
-noise.create("voronoi",(400,400),(109,110,0.3))
+noise.create("voronoi",(400,400),(109,110,0.2)) # testing the voronoi noise specifically

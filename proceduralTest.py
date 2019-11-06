@@ -26,7 +26,7 @@ class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        im = Image.open('voronoi_output01.png', 'r')
+        im = Image.open('etna_topography_heighmap.png', 'r')
         self.imageMode = im.mode
         #im = Image.open('estuaire gironde nord Height Map (ASTER 30m).png','r')
         zArray = im.getdata()
