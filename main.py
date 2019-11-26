@@ -4,25 +4,43 @@ try:
     from direct.showbase.ShowBase import ShowBase
     from direct.task import Task
     from ParticleField import ParticleMesh
+    from DataSaveLib import DataSet
+    from Gui import UserInterface
 except:
     print('failed to load modules')
     sys.exit()
 
+
+
+
 class mainApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
-        self.ParticleSystem = ParticleMesh(20,50,70,70,None)
-        self.set_background_color(VBase3F(0,0,0))
-        self.task_mgr.add(self.MainLoop,'ScreenUpdatingTask')
+        # core variables
+        self.ParticleSystem = ParticleMesh(20,20,10,10,None)
+        self.Memory = DataSet() # stores the simulation results
+        self.Gui2d = UserInterface() # buttons and stuff
+
+        # ligting
+        dlight = DirectionalLight('dlight')
+        dlight.setColor(VBase4(0.9, 0.9, 1, 1))
+        self.dlnp = render.attachNewNode(dlight)
+        self.dlnp.setHpr(0, -60, 0)
+        render.setLight(self.dlnp)
+
+        self.set_background_color(VBase3F(0.1,0.1,0.1))
+        self.task_mgr.add(self.Compute,'ComputingTask')
         self.dt = 0.001 # time step for the simulation (in seconds)
         return None
-    def MainLoop(self,task):
-        self.ParticleSystem.update(self.dt)
-        return None
+
+    def Compute(self,task):
+        self.Memory.append(self.ParticleSystem.update(self.dt))
+        return task.cont
+
 
 Simulation = mainApp()
 try:
     Simulation.run()
 except:
     print("SystemExit successfull, running exception...")
-    sys.exit(0) # avoid systemExit error
+    sys.exit(0) # avoid annoying systemExit error
