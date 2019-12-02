@@ -4,7 +4,7 @@ from ProceduralGen import *
 class ParticleMesh:
     
     def __init__(self,l,w,Vl,Vw,extraArgs):
-        is_wireframed = False
+        is_wireframed = True
         '''
         ParticleMesh
         ===
