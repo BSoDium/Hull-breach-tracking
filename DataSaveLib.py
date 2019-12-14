@@ -7,7 +7,7 @@ class DataSet:
         self.buffer = None
         return None
     
-    def append(self,Node):
+    def store(self,Node):
         self.RawData.append(Node)
         return None
     

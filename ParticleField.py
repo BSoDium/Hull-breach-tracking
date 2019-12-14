@@ -1,5 +1,6 @@
 from panda3d.core import * # needs to be improved later on (maybe)
 from ProceduralGen import *
+from copy import deepcopy
 
 class ParticleMesh:
     
@@ -8,12 +9,13 @@ class ParticleMesh:
         '''
         ParticleMesh
         ===
-        this is a particle array, it reacts to stress, or other kinds of mechanical stresses.
+        this is a particle array, it reacts to mechanical stresses.
         Arguments needed: lenght and width in 3d units, length and width in amount of vertices (the four must be ints).
         '''
-        self.surface = RectangleSurface(l,w,Vl,Vw,is_wireframed)
+        self.surface = RectangleSurface(l,w,Vl,Vw)
         return None
 
     def update(self,dt):
-        mesh = self.surface
+        # MODIFY THE SURFACE (somehow)
+        mesh = deepcopy(self.surface.GeomNode)
         return mesh

@@ -1,7 +1,7 @@
 from panda3d.core import *
 import numpy as np
 
-def TupleSum(args):
+def TupleSum(args): # used in 
     '''
     concatenates tuples inside lists
     '''
@@ -12,18 +12,16 @@ def TupleSum(args):
     return S
 
 class RectangleSurface:
-    def __init__(self,l,w,Vl,Vw,wireframe):
+    def __init__(self,l,w,Vl,Vw):
         self.GeomNode = self.create(Vl,Vw,l,w)
-        self.GeomNode = render.attachNewNode(self.GeomNode)
-        if wireframe:
-            self.GeomNode.setRenderModeWireframe()
+        #self.GeomNode.setRenderModeWireframe()
         return None
 
     def create(self,Vlenght,Vwidth,length,width):
         '''
-        creates a triangulated rectangle 
+        creates a triangulated rectangle
         '''
-        VertexCount = Vlenght*Vwidth 
+        VertexCount = Vlenght*Vwidth
         array = GeomVertexArrayFormat()
         array.add_column('vertex',3, Geom.NTFloat32, Geom.CPoint) # we'll work only with vertex coordinates rn, I don't want to mess with lighting and shit
         array.add_column('normal',3, Geom.NTFloat32, Geom.CNormal)
@@ -47,6 +45,8 @@ class RectangleSurface:
         tempGeom = Geom(LocalVdata)
         for i in range(Vwidth-1):
             TempData = TupleSum([(x+i-1,x+i) for x in range(1,VertexCount,Vwidth)]) # this tuple contains the list of indexes for the vertices of each geomtristrip (one band at a time)
+            
+            '''
             primitive = GeomTristrips(Geom.UHStatic)
             for j in TempData:
                 #assert j < LocalVdata.get_num_rows() # debug
@@ -54,9 +54,9 @@ class RectangleSurface:
             primitive.close_primitive()
             #GPrimList.append(primitive)
             tempGeom.add_primitive(primitive)
-            
-            # kinda long code for such a simple thing
             '''
+            # kinda long code for such a simple thing
+            
             TempData = list(TempData)
             bufferData = list(tuple(TempData[:1])+TupleSum([(TempData[x],TempData[x-1]) for x in range(2,len(TempData),2)]))
             if len(bufferData) != len(TempData):
@@ -68,12 +68,15 @@ class RectangleSurface:
                 primitive.add_vertex(j)
             primitive.close_primitive()
             tempGeom.add_primitive(primitive)    
-            '''
+            
 
         PlateNode = GeomNode('gnode')
         PlateNode.addGeom(tempGeom)
         #PlateNodePath = render.attachNewNode(PlateNode)
         return PlateNode
+    
+    def deform(self,data): # data is the position map 
+        return None # should actually return the deformed geometry
 
 array = GeomVertexArrayFormat()
 array.addColumn("vertex",3,Geom.NTFloat32,Geom.CPoint)

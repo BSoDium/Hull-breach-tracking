@@ -34,7 +34,7 @@ class mainApp(ShowBase):
         return None
 
     def Compute(self,task):
-        self.Memory.append(self.ParticleSystem.update(self.dt))
+        self.Memory.store(self.ParticleSystem.update(self.dt)) # add every the geometry of each frame to the memory, so we can display it later
         return task.cont
 
 
@@ -44,3 +44,6 @@ try:
 except:
     print("SystemExit successfull, running exception...")
     sys.exit(0) # avoid annoying systemExit error
+
+if __name__ == "__main__":
+    pass # temporary

@@ -2,6 +2,7 @@ from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from PIL import Image
+from Geometry import normalizer
 import numpy as np # first time I'm using that crappy lib for game dev
 import sys
 
@@ -26,7 +27,7 @@ class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        im = Image.open('etna_topography_heighmap.png', 'r')
+        im = Image.open('terrain.bmp', 'r')
         self.imageMode = im.mode
         #im = Image.open('estuaire gironde nord Height Map (ASTER 30m).png','r')
         zArray = im.getdata()
@@ -34,6 +35,9 @@ class testApp(ShowBase):
         self.doubleFacedRectangle(IMwidth,IMheight,400,400,(0,0,0),zArray)
         self.set_background_color(VBase3F(0,0,0))
         #self.CreateSomeLighting()
+        
+        # external tools
+        self.GeomTool = normalizer()
         return None
     
     def doubleFaceTriangle(self):
@@ -111,7 +115,7 @@ class testApp(ShowBase):
                 if self.imageMode == "I":
                     localZ = -(zArray.getpixel((x,y))-1000)/1000 # 1000 means above water level
                 elif self.imageMode == "RGBA":
-                    localZ = zArray.getpixel((x,y))[0]/255 # between 0 and 1
+                    localZ = zArray.getpixel((x,y))[0]/255*15 # between 0 and 1
                 vertex.addData3f(LCoord[x],WCoord[y],localZ)
         # vertex data has been created, we still need the geomprimitives
         #GPrimList = [] 
