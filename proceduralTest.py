@@ -27,7 +27,7 @@ class testApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         #self.doubleFaceTriangle()
-        im = Image.open('terrain.bmp', 'r')
+        im = Image.open('terrain.png', 'r')
         self.imageMode = im.mode
         #im = Image.open('estuaire gironde nord Height Map (ASTER 30m).png','r')
         zArray = im.getdata()

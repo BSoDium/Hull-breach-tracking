@@ -58,12 +58,24 @@ class Noise:
         sizex, sizey= size[0], size[1]
         BufferTable = [[(0,0,0,1) for i in range(sizey)] for j in range(sizex)]
         ScanOrder = []
-        for n in range(sizey):
-            try:
-                test = BufferTable[0][n] # triggers the exception when needed
-                ScanOrder.append([(x , n - x) for x in range(n+1)])
-            except:
-                pass
+        for n in range(max(sizex,sizey)): #topleft triangle
+            new = []
+            i,p = n,0
+            while p < min(sizex,sizey):
+                new.append((i,p))
+                i -= 1
+                p += 1  
+            ScanOrder.append(new)
+        '''
+        for p in range(min(sizex,sizey),-1,-1): #bottomright triangle // go up while scanning the left stairs
+            new = []
+            i,n = p,max(sizex,sizey) # initalize local pointers
+            while n >= 0:
+                new.append((n,i))
+                i -= 1
+                n -= 1
+            ScanOrder.append(new)
+        '''
         temprand = randrange(0,255)
         BufferTable[0][0] = (temprand,temprand,temprand,1) # initalize
         for a in range(len(ScanOrder[1:])):
@@ -101,7 +113,7 @@ class Noise:
         img = Image.new('RGBA', (sizex, sizey))
         img.putdata(output)
         img.show()
-        name = 'terrain.bmp'
+        name = 'terrain.png'
         img.save(name)
         print("\n",end='\r')
         print("done")
