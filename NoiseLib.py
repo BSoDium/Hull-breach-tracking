@@ -32,7 +32,7 @@ class Noise:
             for x in range(len(BufferTable[y])): # we could just use BufferTable[0], same result
                 d = -1 # negative for "undefined"
                 for u in CellList:
-                    temp = self.lenght((x,y),u)
+                    temp = lenght((x,y),u)
                     if temp < d or d < 0:
                         d = temp
                 # now we know the distance to the closest point
@@ -120,10 +120,42 @@ class Noise:
         print("saved as "+ name)
 
         return output
+    
+    def Perlin(self,size,args):
+        gridRes = (4,4) # gridres[0]=gridres[1]|size[0]
+        # create Buffer
+        BufferTable = [[(0,0,0,1) for i in range(sizey)] for j in range(sizex)]
+        # create grid
+        ProceduralVectField = [[(randrange(0,360), randrange(0,360), i*gridRes[0], j*gridRes[1]) for i in range(size[0]//gridRes[0])] for j in range(size[1]//gridRes[1])]
+        # dot product
+        for i in range(size[0]):
+            #per column iteration
+            for j in range(size[1]):
+                # per pixel iteration
+                Interval = [(i - i%4, i - i%4 + 4), # previous and next point on the grid
+                            (j - j%4, j - j%4 + 4)]
+                index = [(Interval[0][0]/4,Interval[0][1]/4),
+                        (Interval[1][0]/4,Interval[1][1]/4)]
+                scan = [(index[0][0],index[1][0]),
+                        (index[0][1],index[1][0]),
+                        (index[0][0],index[1][1]),
+                        (index[0][1],index[1][1])] # closest grid points
+                for x in scan:
+                    dist = vector(ProceduralVectField [x[0]] [x[1]] [2:], (i, j) ) # vecteur distance
+                    actualVect = ProceduralVectField [x[0]] [x[1]] [:2]
 
-    def lenght(self,posA,posB):
-        dx, dy = posB[0] - posA[0], posB[1] - posA[1]
-        return sqrt(dx**2 + dy**2)
+
+
+        return None
+
+def lenght(posA,posB):
+    dx, dy = posB[0] - posA[0], posB[1] - posA[1]
+    return sqrt(dx**2 + dy**2)
+    
+def vector(posA,posB):
+    dx, dy = posB[0] - posA[0], posB[1] - posA[1]
+    return (dx,dy)
+
 
 def smoothstep(x):
     '''math function smoothstep'''

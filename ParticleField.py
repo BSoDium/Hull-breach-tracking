@@ -5,7 +5,7 @@ from copy import deepcopy
 class ParticleMesh:
     
     def __init__(self,l,w,Vl,Vw,extraArgs):
-        is_wireframed = False
+        #is_wireframed = False
         '''
         ParticleMesh
         ===
@@ -17,5 +17,8 @@ class ParticleMesh:
 
     def update(self,dt):
         # MODIFY THE SURFACE (somehow)
+        CurrentState = self.surface.GetData() # still unused
         mesh = deepcopy(self.surface.GeomNode)
+        CurrentState[0] = LVecBase3f(0,0,0)
+        self.surface.deform(CurrentState)
         return mesh

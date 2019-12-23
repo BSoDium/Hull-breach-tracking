@@ -1,4 +1,4 @@
-import sys
+import sys,os
 try:
     from panda3d.core import *
     from direct.showbase.ShowBase import ShowBase
@@ -7,11 +7,15 @@ try:
     from DataSaveLib import DataSet
     from Gui import UserInterface
 except:
-    print('failed to load modules')
-    sys.exit()
+    ErrorMessage = 'failed to load modules'
+    sys.exit(ErrorMessage)
 
-
-
+'''
+try:
+    os.system("pstats") # debug, you should comment these lines if you don't want the pstats window to pop up
+except:
+    pass
+'''
 
 class mainApp(ShowBase):
     def __init__(self):
@@ -21,7 +25,7 @@ class mainApp(ShowBase):
         self.Memory = DataSet() # stores the simulation results
         self.Gui2d = UserInterface() # buttons and stuff
 
-        # ligting
+        # lighting
         dlight = DirectionalLight('dlight')
         dlight.setColor(VBase4(0.9, 0.9, 1, 1))
         self.dlnp = render.attachNewNode(dlight)
@@ -31,19 +35,26 @@ class mainApp(ShowBase):
         self.set_background_color(VBase3F(0.1,0.1,0.1))
         self.task_mgr.add(self.Compute,'ComputingTask')
         self.dt = 0.001 # time step for the simulation (in seconds)
+        
+        # debug
+        self.debug()
         return None
 
     def Compute(self,task):
         self.Memory.store(self.ParticleSystem.update(self.dt)) # add every the geometry of each frame to the memory, so we can display it later
         return task.cont
 
+    def debug(self):
+        self.pstats = True # base inheritance
+        PStatClient.connect()
+        return None
 
-Simulation = mainApp()
-try:
-    Simulation.run()
-except:
-    print("SystemExit successfull, running exception...")
-    sys.exit(0) # avoid annoying systemExit error
 
-if __name__ == "__main__":
-    pass # temporary
+
+if __name__=="__main__":
+    Simulation = mainApp()
+    try:
+        Simulation.run()
+    except:
+        print("SystemExit successfull, running exception...")
+        sys.exit(0) # avoid annoying systemExit error
