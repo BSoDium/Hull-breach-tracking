@@ -20,7 +20,7 @@ class ParticleMesh:
         CurrentState = self.surface.GetData() # still unused
         mesh = deepcopy(self.surface.GeomNode)
 
-        CurrentState[0] = LVecBase3f(0,0,0) # test
+        CurrentState[0] = LVecBase3f(0,0,0.01) + CurrentState[0] # test
         self.surface.deform(CurrentState)
         
         return mesh

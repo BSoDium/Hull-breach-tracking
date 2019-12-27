@@ -74,7 +74,7 @@ class RectangleSurface:
             
         '''
         WARNING: FURTHER AUTOMATED NORMAL CALCULATION SHOULD BE INSERTED HERE 
-        (the vertices and [primitives have been defined, but the node hasn't
+        (the vertices and primitives have been defined, but the node hasn't
         been created yet)
         ...
         nvm solved it
@@ -121,9 +121,6 @@ class RectangleSurface:
         self.NormalTool.blit_normals(output, geom) # apply changes
         return None # this function modifies the geomNode as a global var
 
-
-def processGeomNode(): # I'm working on it
-    return None
 
 array = GeomVertexArrayFormat()
 array.addColumn("vertex",3,Geom.NTFloat32,Geom.CPoint)
