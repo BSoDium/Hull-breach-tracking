@@ -143,6 +143,8 @@ class Noise:
                 for x in scan:
                     dist = vector(ProceduralVectField [x[0]] [x[1]] [2:], (i, j) ) # vecteur distance
                     actualVect = ProceduralVectField [x[0]] [x[1]] [:2]
+                    # interpolate
+                    
 
 
 
@@ -156,6 +158,11 @@ def vector(posA,posB):
     dx, dy = posB[0] - posA[0], posB[1] - posA[1]
     return (dx,dy)
 
+def dotProd(vectA,vectB):
+    output = 0
+    for x,y in zip(vectA,vectB):
+        output += x*y
+    return output
 
 def smoothstep(x):
     '''math function smoothstep'''

@@ -1,5 +1,6 @@
 from panda3d.core import *
 import numpy as np
+from Geometry import normalizer
 
 def TupleSum(args): # used in 
     '''
@@ -14,6 +15,7 @@ def TupleSum(args): # used in
 class RectangleSurface:
     def __init__(self,l,w,Vl,Vw):
         self.GeomNode = self.create(Vl,Vw,l,w)
+        self.NormalTool = normalizer()
         #self.GeomNode.setRenderModeWireframe()
         self.SizeData = (l,w,Vl,Vw)
         return None
@@ -74,6 +76,8 @@ class RectangleSurface:
         WARNING: FURTHER AUTOMATED NORMAL CALCULATION SHOULD BE INSERTED HERE 
         (the vertices and [primitives have been defined, but the node hasn't
         been created yet)
+        ...
+        nvm solved it
         '''
 
         PlateNode = GeomNode('gnode')
@@ -104,16 +108,18 @@ class RectangleSurface:
         return PosOutput[0] # format: two dimensionnal array, one sublist per encountered geom, each sublist contains LVecBase3f positional values (we only need the first and only geom)
     
     def deform(self,data): # data is the position map 
-        # I will now replace the old geomvertexData according to the data scheme
-        format = GeomVertexFormat.getV3n3() 
-        vdata = GeomVertexData('DynamicPlate', format, Geom.UH_static)
-        vdata.setNumRows(self.SizeData[2]*self.SizeData[3]) 
-        vertex = GeomVertexWriter(vdata,'vertex')
-        for x in data:
-            vertex.addData3f(x)
-        geom = self.surface.getGeom(0) # first and only one
+        geom = self.GeomNode.modifyGeom(0)
+        vdata = geom.modifyVertexData()
+        # prim = geom.modifyPrimitive(0) # not necessary here, could be usefull in any other situation tho
+        vertexWriter = GeomVertexRewriter(vdata, 'vertex')
 
-        return None # should actually return the deformed geometry
+        for i in range(len(data)):
+            vertexWriter.setRow(i)
+            vertexWriter.setData3f(data[i])
+
+        output = self.NormalTool.compute_data(data, self.SizeData)
+        self.NormalTool.blit_normals(output, geom) # apply changes
+        return None # this function modifies the geomNode as a global var
 
 
 def processGeomNode(): # I'm working on it

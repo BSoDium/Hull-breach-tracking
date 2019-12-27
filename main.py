@@ -50,7 +50,7 @@ class mainApp(ShowBase):
         return None
 
 
-
+''' # remove these when compiling
 if __name__=="__main__":
     Simulation = mainApp()
     try:
@@ -58,3 +58,7 @@ if __name__=="__main__":
     except:
         print("SystemExit successfull, running exception...")
         sys.exit(0) # avoid annoying systemExit error
+'''
+
+Simulation = mainApp()
+Simulation.run() # debug
