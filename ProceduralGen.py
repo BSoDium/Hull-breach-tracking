@@ -85,7 +85,10 @@ class RectangleSurface:
         #PlateNodePath = render.attachNewNode(PlateNode)
         return PlateNode
     
-    def GetData(self):
+    def GetPosData(self):
+        '''
+        Provides positional data for each vertex. Output format: LVecBase3f List
+        '''
         # https://docs.panda3d.org/1.10/python/programming/internal-structures/other-manipulation/reading-existing-geometry#reading-existing-geometry-data
         PosOutput = [] # vertices
         for i in range(self.GeomNode.getNumGeoms()): # we know it only contains one in this particular algorithm
@@ -107,6 +110,27 @@ class RectangleSurface:
 
         return PosOutput[0] # format: two dimensionnal array, one sublist per encountered geom, each sublist contains LVecBase3f positional values (we only need the first and only geom)
     
+    def GetNormalData(self):
+        '''
+        Provides normal data for each vertex. Output format: LVecBase3f List
+        '''
+        NormalOutput = []
+        for i in range(self.GeomNode.getNumGeoms()):
+            geom = self.GeomNode.getGeom(i)
+            vdata = geom.getVertexData()
+            normal = GeomVertexReader(vdata, "normal")
+            vertex = GeomVertexReader(vdata, "vertex")
+
+            BufferNormalList = []
+
+            while not vertex.isAtEnd():
+                vertex.getData3() # while condition toggling
+                BufferNormalList.append(normal.getData3())
+            
+            NormalOutput.append(BufferNormalList)
+        
+        return NormalOutput[0] # there's only one geomNode, I created a list in case I need to add more stuff
+
     def deform(self,data): # data is the position map 
         geom = self.GeomNode.modifyGeom(0)
         vdata = geom.modifyVertexData()

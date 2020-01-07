@@ -61,8 +61,13 @@ class mainApp(ShowBase):
         '''
         should contain all of the gui stuff
         '''
+        # debug
+        print("Computing process completed successfully")
+        print("Loading and displaying content...")
+
         self.taskMgr.add(self.Display,'PostProcessingTask')
         self.Memory.unwrap()
+        
         return None
 
     def Display(self,task):
