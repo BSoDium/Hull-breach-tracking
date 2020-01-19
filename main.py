@@ -10,6 +10,16 @@ except:
     ErrorMessage = 'failed to load modules'
     sys.exit(ErrorMessage)
 
+try:
+    from pypresence import Presence
+    client_id = "664921802761306132"
+    RPC = Presence(client_id)
+    RPC.connect()
+    RPC.update( state= "simulating some random stuff")
+except:
+    print("[WAVE ENGINE]: failed to connect to discord RPC")
+    pass
+
 '''
 try:
     os.system("pstats") # debug, you should comment these lines if you don't want the pstats window to pop up
@@ -21,7 +31,7 @@ class mainApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         # core variables
-        self.ParticleSystem = ParticleMesh(20,20,10,10,None)
+        self.ParticleSystem = ParticleMesh(20,20,30,10,None)
         self.Memory = DataSet() # stores the simulation results
         self.Gui2d = UserInterface() # buttons and stuff
 
@@ -38,6 +48,8 @@ class mainApp(ShowBase):
         self.task_mgr.add(self.UpdateScene,'SceneUpdatingTask')
 
         self.SimState = 1 # current frame (when reading the precomputed data)
+
+        # user variables
         self.SimLenght = 400
         self.dt = 0.001 # time step for the simulation (in seconds)
         
@@ -80,7 +92,7 @@ class mainApp(ShowBase):
             except:
                 pass
             self.Memory.getFrameData(self.SimState).show()
-            self.SimState +=1
+            self.SimState += 1
 
         return task.cont
 
@@ -106,5 +118,5 @@ if __name__=="__main__":
         sys.exit(0) # avoid annoying systemExit error
 
 '''
-Simulation = mainApp()
+Simulation = mainApp() # 
 Simulation.run() # debug
