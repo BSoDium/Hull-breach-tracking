@@ -14,19 +14,6 @@ class engine:
         self.LastPos = None # local buffer
         
         return None
-    
-    def SetRNS(self, RNS):
-        '''
-        set the RNS array:
-        the RNS is the reference normal state, it will be used later to determine 
-        when deformation will become plastic, and the springs won't come back
-        to their initial position.
-        '''
-        self.ReferenceNormalState = RNS
-        return None
-    
-    def getRNS(self):
-        return self.ReferenceNormalState
 
     def bake(self, PosData, NormalState, SpeedState, TimeShift):
         
@@ -37,7 +24,8 @@ class engine:
             return 1
 
         MainPosBuffer = deepcopy(LinArrayFormat(PosData, self.size)) # we will only modify the buffer\
-        MainNormalBuffer = NormalState
+        MainNormalBuffer = deepcopy(NormalState)
+        MainSpeedBuffer = deepcopy(SpeedState)
 
         self.LastPos = MainPosBuffer # update last known position (used for Bdf)
 
@@ -56,7 +44,7 @@ class engine:
 
         
         
-        return ArrayLinFormat(MainPosBuffer), MainNormalBuffer # currently does nothing sry
+        return ArrayLinFormat(MainPosBuffer), MainSpeedBuffer, MainNormalBuffer # currently does nothing sry
 
     def GetId(self):
         '''

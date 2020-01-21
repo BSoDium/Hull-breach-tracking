@@ -21,13 +21,13 @@ class ParticleMesh:
             line = []
             for x in range(Vw):
                 temp = [upper_normals[y][x]]
-                scanlist = [
+                indexlist = [
                     (x+1, y),
                     (x, y-1),
                     (x-1, y),
                     (x, y+1)
                 ]
-                for a in scanlist:
+                for a in indexlist:
                     if 0 <= a[0] < Vw and 0 <= a[1] < Vl:
                         temp.append(self.CurrentPosState[a[0] + a[1]*Vw] - self.CurrentPosState[x + y*Vw]) 
                 line.append(temp)
@@ -50,15 +50,14 @@ class ParticleMesh:
         '''
         
         self.engine.SetSize(Vl,Vw)
-        self.engine.SetRNS(self.surface.GetNormalData())# initialize RNS
         return None
 
     def update(self,dt):
         # MODIFY THE SURFACE (somehow)
         self.CurrentPosState = self.surface.GetPosData() # get data from the mesh (used when baking)
 
-        NextState, self.NormalState = self.engine.bake(CurrentPosState, self.NormalState, self.speedData, dt) # 
-        self.surface.deform(NextState) # modifies the mesh and calculates the normals accordingly
+        PosState, self.speedData, self.NormalState = self.engine.bake(self.CurrentPosState, self.NormalState, self.speedData, dt) # 
+        self.surface.deform(PosState) # modifies the mesh and calculates the normals accordingly
 
         mesh = deepcopy(self.surface.GeomNode) # copy after it has been modified
         return mesh
