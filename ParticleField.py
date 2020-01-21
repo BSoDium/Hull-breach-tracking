@@ -30,6 +30,8 @@ class ParticleMesh:
                 for a in indexlist:
                     if 0 <= a[0] < Vw and 0 <= a[1] < Vl:
                         temp.append(self.CurrentPosState[a[0] + a[1]*Vw] - self.CurrentPosState[x + y*Vw]) 
+                    else:
+                        temp.append(None) # need to keep the indices right
                 line.append(temp)
             self.NormalState.append(line)
 

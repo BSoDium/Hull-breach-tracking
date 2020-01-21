@@ -7,6 +7,7 @@ class engine:
         self.attributes = {
             "rigidconst":10, # kg/m
             "nodemass":0.1, # kg usi
+            "fictionalradius":0.01, # m
 
         }
         self.size = None
@@ -28,17 +29,36 @@ class engine:
         MainSpeedBuffer = deepcopy(SpeedState)
 
         self.LastPos = MainPosBuffer # update last known position (used for Bdf)
+        
+        length, width = len(MainPosBuffer), len(MainPosBuffer[0])
 
-        for l in range(len(MainPosBuffer)): # actually len(MainPosBuffer) = length
-            for w in range(len(MainPosBuffer[l])):
-                Temp = Vec3(MainPosBuffer[l][w]) # convert to vec3 for easier vector manipulation
-                normTemp = Temp.normalized()
-                
+        for l in range(length): # actually len(MainPosBuffer) = length
+            for w in range(width):
+                pos = Vec3(MainPosBuffer[l][w]) # convert to vec3 for easier vector manipulation
+                speed = Vec3(MainSpeedBuffer[l][w])
+                normals = []
+                for x in MainNormalBuffer[l][w][1:]:
+                    try:
+                        normals.append(Vec3(x))
+                    except:
+                        normals.append(None)
+
+                AppliedForce = Vec3(0, 0, 0)
+
                 neighbours = [
-                            (w,l-1),
-                    (w-1,l),        (w+1,l),
+                            (w+1,l),
+                    (w,l-1),        (w-1,l),
                             (w,l+1)
                 ]
+
+                for x in range(4):
+                    a,b = neighbours[x]
+                    if 0 < a < width and 0 < b < length:
+                        RestingJointVector = normals[x] 
+                        CurrentJointVector = Vec3(MainPosBuffer[b][a]) - pos
+                        angle = RestingJointVector.normalized().angleDeg(CurrentJointVector.normalized())
+                        resultingTorque = self.attributes['rigidconst'] * angle
+
 
                 
 

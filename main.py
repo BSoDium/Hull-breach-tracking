@@ -50,7 +50,7 @@ class mainApp(ShowBase):
         self.SimState = 1 # current frame (when reading the precomputed data)
 
         # user variables
-        self.SimLenght = 400
+        self.SimLenght = 100 # frames
         self.dt = 0.001 # time step for the simulation (in seconds)
         
         # debug
