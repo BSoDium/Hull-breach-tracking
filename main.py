@@ -1,15 +1,16 @@
 import sys,os
-try:
+if 1:
     from panda3d.core import *
     from direct.showbase.ShowBase import ShowBase
     from direct.task import Task
     from ParticleField import ParticleMesh
     from DataSaveLib import DataSet
     from Gui import UserInterface
+'''
 except:
     ErrorMessage = 'failed to load modules'
     sys.exit(ErrorMessage)
-
+'''
 try:
     from pypresence import Presence
     client_id = "664921802761306132"
@@ -31,9 +32,10 @@ class mainApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         # core variables
-        self.ParticleSystem = ParticleMesh(20,20,30,10,None)
+        self.ParticleSystem = ParticleMesh(20,20,30,10,None) # default size and data (will be displayed when you first open the program)
         self.Memory = DataSet() # stores the simulation results
         self.Gui2d = UserInterface() # buttons and stuff
+        self.TaskList = [] # this will contain the commands that must be executed during pre computing
 
         # lighting
         dlight = DirectionalLight('dlight')
@@ -44,6 +46,7 @@ class mainApp(ShowBase):
 
         self.set_background_color(VBase3F(0.1,0.1,0.1))
 
+        # initiate computing sequence
         self.task_mgr.add(self.Compute,'ComputingTask')
         self.task_mgr.add(self.UpdateScene,'SceneUpdatingTask')
 
@@ -65,7 +68,7 @@ class mainApp(ShowBase):
         if task.frame < self.SimLenght:
             self.Memory.store(self.ParticleSystem.update(self.dt)) # add every the geometry of each frame to the memory, so we can display it later
             return task.cont
-        else:
+        else: # end of computing process
             self.transition()
             return task.done
     
@@ -78,7 +81,7 @@ class mainApp(ShowBase):
         print("Loading and displaying content...")
 
         self.taskMgr.add(self.Display,'PostProcessingTask')
-        self.Memory.unwrap()
+        self.Memory.unwrap(True)
         
         return None
 

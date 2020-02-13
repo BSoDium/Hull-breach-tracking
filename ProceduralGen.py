@@ -16,7 +16,6 @@ class RectangleSurface:
     def __init__(self,l,w,Vl,Vw):
         self.GeomNode = self.create(Vl,Vw,l,w)
         self.NormalTool = normalizer()
-        #self.GeomNode.setRenderModeWireframe()
         self.SizeData = (l,w,Vl,Vw)
         return None
 

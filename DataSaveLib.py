@@ -14,12 +14,14 @@ class DataSet:
     def insert(self,Node,index):
         return None
     
-    def unwrap(self):
+    def unwrap(self, wireframe):
         '''
         transfers the stored GeomNodes to the scene and hides them immediately
         '''
         for x in self.RawData:
             foo = render.attachNewNode(x)
+            if wireframe:
+                foo.setRenderModeWireframe()
             foo.hide()
             self.LoadedData.append(foo)
         return None
