@@ -1,22 +1,23 @@
 import sys,os
-if 1:
+try:
     from panda3d.core import *
     from direct.showbase.ShowBase import ShowBase
     from direct.task import Task
     from ParticleField import ParticleMesh
     from DataSaveLib import DataSet
     from Gui import UserInterface
-'''
-except:
+    from CommandLine import Console
+except ModuleNotFoundError:
     ErrorMessage = 'failed to load modules'
     sys.exit(ErrorMessage)
-'''
+
 try:
     from pypresence import Presence
     client_id = "664921802761306132"
     RPC = Presence(client_id)
     RPC.connect()
-    RPC.update( state= "simulating some random stuff")
+    RPC.update( state= "debugging: developer mode", 
+                spectate= "watch", details= "build 05d4a")
 except:
     print("[WAVE ENGINE]: failed to connect to discord RPC")
     pass
@@ -28,14 +29,33 @@ except:
     pass
 '''
 
+sys.stdout = open('output.log', 'w') # debug
+
 class mainApp(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
+
+        # debugging 
+        self.setFrameRateMeter(True)
+
         # core variables
         self.ParticleSystem = ParticleMesh(20,20,30,10,None) # default size and data (will be displayed when you first open the program)
         self.Memory = DataSet() # stores the simulation results
         self.Gui2d = UserInterface() # buttons and stuff
-        self.TaskList = [] # this will contain the commands that must be executed during pre computing
+        
+        # console
+        self.UserConsole = Console()
+        commandDic = {
+            "test":self.ParticleSystem.override
+        }
+        self.UserConsole.create(commandDic)
+        
+        # these are the tasks that will be executed during the sim
+        self.TaskList = [ # I know the syntax isn't easy...
+            ["single_static", (10,4), (-3, -1.5, 0.3), [1,2]],
+            #["single_following_sine", (4,1), (400,5,0,(0,0,1)), [0,100]],
+            #["single_virtual", (4,5), [0,100]]
+        ] 
 
         # lighting
         dlight = DirectionalLight('dlight')
@@ -53,7 +73,7 @@ class mainApp(ShowBase):
         self.SimState = 1 # current frame (when reading the precomputed data)
 
         # user variables
-        self.SimLenght = 100 # frames
+        self.SimLenght = 200 # frames
         self.dt = 0.001 # time step for the simulation (in seconds)
         
         # debug
@@ -66,7 +86,7 @@ class mainApp(ShowBase):
         [PRECOMPUTING LOOP]
         '''
         if task.frame < self.SimLenght:
-            self.Memory.store(self.ParticleSystem.update(self.dt)) # add every the geometry of each frame to the memory, so we can display it later
+            self.Memory.store(self.ParticleSystem.update(self.dt, self.TaskList, task.frame)) # add every the geometry of each frame to the memory, so we can display it later
             return task.cont
         else: # end of computing process
             self.transition()
@@ -81,7 +101,7 @@ class mainApp(ShowBase):
         print("Loading and displaying content...")
 
         self.taskMgr.add(self.Display,'PostProcessingTask')
-        self.Memory.unwrap(True)
+        self.Memory.unwrap(wireframe = True)
         
         return None
 
@@ -96,6 +116,9 @@ class mainApp(ShowBase):
                 pass
             self.Memory.getFrameData(self.SimState).show()
             self.SimState += 1
+        else:
+            print("done")
+            return task.done
 
         return task.cont
 
@@ -111,15 +134,12 @@ class mainApp(ShowBase):
         return None
 
 
-'''
+
 if __name__=="__main__":
     Simulation = mainApp()
     try:
         Simulation.run()
-    except:
+    except SystemExit:
         print("SystemExit successfull, running exception...")
         sys.exit(0) # avoid annoying systemExit error
 
-'''
-Simulation = mainApp() # 
-Simulation.run() # debug

@@ -124,7 +124,7 @@ class RectangleSurface:
 
             while not vertex.isAtEnd():
                 vertex.getData3() # while condition toggling
-                BufferNormalList.append(normal.getData3())
+                BufferNormalList.append(normal.getData3()) # a - sign is necessary
             
             NormalOutput.append(BufferNormalList)
         
@@ -137,6 +137,7 @@ class RectangleSurface:
         vertexWriter = GeomVertexRewriter(vdata, 'vertex')
 
         for i in range(len(data)):
+            assert (type(data[i][0]) == float and type(data[i][1]) == float and type(data[i][2]) == float)
             vertexWriter.setRow(i)
             vertexWriter.setData3f(data[i])
 

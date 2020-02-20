@@ -1,14 +1,16 @@
-from panda3d.core import *
+from panda3d.core import Vec3, LVecBase3f
 from copy import deepcopy
 from Geometry import crossProd
+from math import isinf, cos, sin, pi
 
 class engine:
     def __init__(self): 
         self.Id = "metal_softbody - 4pernode_harmosc" # not sure about the syntax yet
         self.attributes = {
-            "rigidconst":10, # kg/m
+            "angularRigidconst":10, # kg/m
+            "linearRigidconst":5,
             "nodemass":0.1, # kg usi
-            "fictionalradius":0.01, # m
+            "friction":1
 
         }
         self.size = None
@@ -21,7 +23,9 @@ class engine:
                 NodeGeometry, 
                 SpeedState, 
                 AccelState, 
-                TimeShift ):
+                RuleTable,
+                TimeShift,
+                frame): # cf https://docs.blender.org/manual/en/latest/physics/baking.html
         
         try:
             assert len(self.size) == 2 # debug
@@ -38,75 +42,83 @@ class engine:
         
         length, width = len(MainPosBuffer), len(MainPosBuffer[0])
 
-        ''' 
-        JointTable = [] # Le systeme que l'on etudie est en realite la table des liens (nommes "joints")
-        # je suis obligé de construire la table explicitement (organisation non lineaire trop complexe a gerer)
-        for y in range(2*length - 1):
-            Line = []
-            for x in range(width - (y+1)%2):
-                if not y%2: # even y ie we're creating a horizontal joint (width of them actually)
-                    #print("horizal")
-                    Line.append(HarmoscLink((y//2,x),
-                                            (y//2,x+1),
-                                            self.attributes['rigidconst'], 
-                                            MainPosBuffer))
-                else: # vertical joint, odd y 
-                    #print("vertical")
-                    Line.append(HarmoscLink((y//2,x),
-                                            (y//2+1,x),
-                                            self.attributes['rigidconst'],
-                                            MainPosBuffer))
-            JointTable.append(Line)
-        # done
-        ''' # en fait non tout ça ne sert a rien, 1h de debugging pour rien p*tain
-
-
         for l in range(length): # actually len(MainPosBuffer) = length
             for w in range(width):
-                pos = Vec3(MainPosBuffer[l][w]) # convert to vec3 for easier vector manipulation
-                speed = Vec3(MainSpeedBuffer[l][w])
-                accel = Vec3(MainAccelBuffer[l][w])
-                NodeGeometry = MainNodeGeomBuffer[l][w] 
+                if RuleTable[l][w].getRule().__class__.__name__=="free":
+                    pos = Vec3(MainPosBuffer[l][w]) # convert to vec3 for easier vector manipulation
+                    speed = Vec3(MainSpeedBuffer[l][w])
+                    NodeGeometry = MainNodeGeomBuffer[l][w] 
 
-                AppliedForce = Vec3(0, 0, 0) # utilise pour le BAME
+                    AppliedForce = Vec3(0, 0, 0) # utilise pour le BAME
                 
-                neighbours = [ # connected nodes
-                            (w+1,l),
-                    (w,l-1),        (w-1,l),
-                            (w,l+1)
-                ]
-                # I know the indices aren't ordered properly but I somehow fucked the format up at some point so here we are
+                    neighbours = [ # connected nodes
+                                (w+1,l),
+                        (w,l-1),        (w-1,l),
+                                (w,l+1)
+                    ]
+                    # I know the indices aren't ordered properly but I somehow fucked the format up at some point so here we are
 
-                for x in range(len(neighbours)): # ie 4
-                    a,b = neighbours[x]
-                    if 0 < a < width and 0 < b < length: # side limit
-                        ReferenceNormal = NodeGeometry[0] # la normale qui reste constante et montre l'orientation du noeud
-                        RestingAngle = NodeGeometry[x+1] # +1 because of the reference normal at the begining of the list
+                    for x in range(len(neighbours)): # ie 4
+                        a,b = neighbours[x]
+                        if 0 <= a < width and 0 <= b < length and not RuleTable[b][a].getRule.__class__.__name__=="virtual": # side limit
 
-                        CurrentJointVector = Vec3(MainPosBuffer[b][a]) - pos
-                        CurrentAngle = CurrentJointVector.normalized().angleDeg(ReferenceNormal.normalized())
+                            # CALCUL DE LA FORCE GENEREE PAR L'ANGLE DE TORSION
+                            ReferenceNormal = NodeGeometry[0] # la normale qui reste constante et montre l'orientation du noeud
+                            RestingAngle = NodeGeometry[x+1] # +1 because of the reference normal at the begining of the list
 
-                        delta = RestingAngle - CurrentAngle # ecart
-                        TorqueVect = Vec3(crossProd(ReferenceNormal,CurrentJointVector)).normalized()
-                        resultingTorque = TorqueVect * self.attributes['rigidconst'] * delta   # a partir de la mes calculs sont plus qu'approximatifs 
+                            CurrentJointVector = Vec3(MainPosBuffer[b][a]) - pos
+                            CurrentAngle = CurrentJointVector.normalized().angleDeg(ReferenceNormal.normalized())
+                            
+
+                            delta = CurrentAngle - RestingAngle # ecart
+                            TorqueVect = Vec3(crossProd(CurrentJointVector, ReferenceNormal)).normalized()
+                            resultingTorque = TorqueVect * self.attributes['angularRigidconst'] * delta   # a partir de la mes calculs sont plus qu'approximatifs 
                         
-                        JointLength = CurrentJointVector.length()
-                        AppliedForce += resultingTorque/JointLength # physique a deux balles
-                
-                methods = {
-                    "euler":NextPos_Euler,
-                    "verlet":NextPos_Verlet
-                }
+                            JointLength = CurrentJointVector.length()
+                            AppliedForce += Vec3(crossProd(resultingTorque, -CurrentJointVector)).normalized() * (resultingTorque.length()/JointLength)  # physique a deux balles
 
-                # we will be using euler at first
-                procedure = methods['euler']
+                            # AJOUT DE LA FORCE TRANSMISE PAR LES LIENS RIGIDES
+                            
+                            CurrentJointVector *= -1
+                            print("pos = ", MainPosBuffer[b][a])
+                            print("AppliedForce = ",AppliedForce)
+                            print("accel = ", MainAccelBuffer[b][a])
+                            tempForce = MainAccelBuffer[b][a] * self.attributes['nodemass']
+                            projectionAngle = CurrentJointVector.normalized().angleRad(tempForce.normalized())
+                            if projectionAngle <= pi/2:
+                                sign = 1
+                            else:
+                                sign = -1
+                            projection = CurrentJointVector.normalized() * tempForce.length() * cos(projectionAngle) * sign
+                            
+                            print("projection = ", projection)
+                            AppliedForce -= projection*0.0001 # coefficient obligatoire pour pouvoir observer les effets du bug de transmission
 
-                MainAccelBuffer[l][w], MainSpeedBuffer[l][w], MainPosBuffer[l][w] = procedure(AppliedForce, 
-                                                                                                self.attributes['nodemass'],
-                                                                                                pos,
-                                                                                                speed,
-                                                                                                TimeShift)
+                            if isinf(tempForce.length()):
+                                raise TypeError
+                            
+                            # AJOUT DE L'ASSERVISSEMENT DE DISTANCE
+                            
 
+                    methods = {
+                        "euler":NextPos_Euler,
+                        "verlet":NextPos_Verlet
+                    }
+
+                    # we will be using euler at first
+                    procedure = methods['euler']
+
+                    MainAccelBuffer[l][w], MainSpeedBuffer[l][w], MainPosBuffer[l][w] = procedure(AppliedForce, 
+                                                                                                    self.attributes['nodemass'],
+                                                                                                    pos,
+                                                                                                    speed*self.attributes["friction"],
+                                                                                                    TimeShift)
+                elif RuleTable[l][w].getRule().__class__.__name__=="virtual":
+                    MainAccelBuffer[l][w], MainSpeedBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0)
+                else:
+                    # how do I define the pt0 ?????
+                    pt0 = Vec3(0,0,0)
+                    MainAccelBuffer[l][w], MainSpeedBuffer[l][w], MainPosBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0), LVecBase3f(tuple(RuleTable[l][w].getPos(frame, pt0)))
                 
 
         

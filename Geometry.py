@@ -9,6 +9,9 @@ class normalizer:
         return None
     
     def compute_data(self,data,size):
+        '''
+        computes the normals for the array define by the provided data
+        '''
         n = len(data) # readability
 
         normalData = [LVecBase3f(0,0,1) for i in range(n)] # empty template
@@ -24,7 +27,7 @@ class normalizer:
                     (i , j+1),
                     (i-1 , j),
                     (i , j-1),
-                    (i+1 , j), # only use the 4 closest vertices because it's easier
+                    (i+1 , j), # only use the 4 closest vertices because cmon it's easier 
                 ]
                 normal = LVecBase3f(0,0,0)
                 for a in range(len(scanlist)):
@@ -36,7 +39,7 @@ class normalizer:
                                 buffer[ current[0] ][ current[1] ] - buffer[i][j]
                             )
                         )
-                normalData[ (i-1)*width + j] = normalize(normal)
+                normalData[ (i-1)*width + j] = LVecBase3f(Vec3(normal).normalized())
         
         return normalData
     
@@ -61,7 +64,7 @@ def crossProd(vectA, vectB):
     ]
     return tuple(output) # easier LVecBase3f conversion
 
-def normalize(vect):
+def normalize(vect): # unused
     norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
     output = LVecBase3f((
         abs(vect[0]),

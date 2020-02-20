@@ -14,7 +14,7 @@ class DataSet:
     def insert(self,Node,index):
         return None
     
-    def unwrap(self, wireframe):
+    def unwrap(self, wireframe: bool = True):
         '''
         transfers the stored GeomNodes to the scene and hides them immediately
         '''
