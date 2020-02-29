@@ -17,17 +17,13 @@ try:
     RPC = Presence(client_id)
     RPC.connect()
     RPC.update( state= "debugging: developer mode", 
-                spectate= "watch", details= "build 05d4a")
+                spectate= "watch", details= "build 05d4a", large_image = "logo2")
 except:
     print("[WAVE ENGINE]: failed to connect to discord RPC")
     pass
 
-'''
-try:
-    os.system("pstats") # debug, you should comment these lines if you don't want the pstats window to pop up
-except:
-    pass
-'''
+
+
 
 sys.stdout = open('output.log', 'w') # debug
 
@@ -41,12 +37,18 @@ class mainApp(ShowBase):
         # core variables
         self.ParticleSystem = ParticleMesh(20,20,30,10,None) # default size and data (will be displayed when you first open the program)
         self.Memory = DataSet() # stores the simulation results
-        self.Gui2d = UserInterface() # buttons and stuff
+        self.Gui2d = UserInterface(False) # buttons and stuff
         
         # console
         self.UserConsole = Console()
         commandDic = {
-            "test":self.ParticleSystem.override
+            "recompute":undefined, # I still need to code those
+            "addTask":undefined,
+            "showActiveTasks":undefined,
+            "removeTask":undefined,
+            "toggleDebugMode":self.debug,
+            "toggleFullscreen":self.Gui2d.toggleFullScreen,
+            "exit":stop
         }
         self.UserConsole.create(commandDic)
         
@@ -65,6 +67,7 @@ class mainApp(ShowBase):
         render.setLight(self.dlnp)
 
         self.set_background_color(VBase3F(0.1,0.1,0.1))
+        self.using_pstats = False # by default, debug mode is off
 
         # initiate computing sequence
         self.task_mgr.add(self.Compute,'ComputingTask')
@@ -75,9 +78,10 @@ class mainApp(ShowBase):
         # user variables
         self.SimLenght = 200 # frames
         self.dt = 0.001 # time step for the simulation (in seconds)
+
+        # user imput
+        self.accept("f11", self.Gui2d.toggleFullScreen)
         
-        # debug
-        self.debug()
         return None
 
 
@@ -129,12 +133,33 @@ class mainApp(ShowBase):
 
 
     def debug(self):
-        self.pstats = True # base inheritance
-        PStatClient.connect()
+        '''
+        Toggles pstats task graph if available. If not, please make sure that pstats is installed on your machine, and execute it using cmd with the command 'pstats'
+        '''
+        try:
+            if not self.using_pstats:
+                PStatClient.connect()
+                assert PStatClient.isConnected
+                self.using_pstats = True
+                portVar = ConfigVariableString('pstats-port')
+                self.UserConsole.ConsoleOutput('Connected to pstats server at port %s' % portVar.getValue())
+            else:
+                PStatClient.disconnect()
+                self.using_pstats = False
+                self.UserConsole.ConsoleOutput('Disconnected from pstats server successfully')
+        except:
+            self.UserConsole.ConsoleOutput('Could not establish connection with pstats server')
         return None
 
 
+def undefined():
+    '''
+    This function hasn't been implemented yet
+    '''
+    return NotImplemented
 
+def stop():
+    os._exit(0)
 if __name__=="__main__":
     Simulation = mainApp()
     try:

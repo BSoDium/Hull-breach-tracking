@@ -20,9 +20,9 @@ class engine:
         return None
 
     def bake(self, PosData, 
-                NodeGeometry, 
-                SpeedState, 
-                AccelState, 
+                NodeGeometry,
+                LinSpeedState, 
+                LinAccelState, 
                 RuleTable,
                 TimeShift,
                 frame): # cf https://docs.blender.org/manual/en/latest/physics/baking.html
@@ -35,8 +35,8 @@ class engine:
 
         MainPosBuffer = deepcopy(LinArrayFormat(PosData, self.size)) # we will only modify the buffer\
         MainNodeGeomBuffer = deepcopy(NodeGeometry)
-        MainSpeedBuffer = deepcopy(SpeedState)
-        MainAccelBuffer = deepcopy(AccelState)
+        MainLinSpeedBuffer = deepcopy(LinSpeedState)
+        MainLinAccelBuffer = deepcopy(LinAccelState)
 
         self.LastPos = MainPosBuffer # save last known position as engine data (used for BDF)
         
@@ -46,7 +46,7 @@ class engine:
             for w in range(width):
                 if RuleTable[l][w].getRule().__class__.__name__=="free":
                     pos = Vec3(MainPosBuffer[l][w]) # convert to vec3 for easier vector manipulation
-                    speed = Vec3(MainSpeedBuffer[l][w])
+                    speed = Vec3(MainLinSpeedBuffer[l][w])
                     NodeGeometry = MainNodeGeomBuffer[l][w] 
 
                     AppliedForce = Vec3(0, 0, 0) # utilise pour le BAME
@@ -78,12 +78,12 @@ class engine:
                             AppliedForce += Vec3(crossProd(resultingTorque, -CurrentJointVector)).normalized() * (resultingTorque.length()/JointLength)  # physique a deux balles
 
                             # AJOUT DE LA FORCE TRANSMISE PAR LES LIENS RIGIDES
-                            
+                            '''
                             CurrentJointVector *= -1
                             print("pos = ", MainPosBuffer[b][a])
                             print("AppliedForce = ",AppliedForce)
-                            print("accel = ", MainAccelBuffer[b][a])
-                            tempForce = MainAccelBuffer[b][a] * self.attributes['nodemass']
+                            print("accel = ", MainLinAccelBuffer[b][a])
+                            tempForce = MainLinAccelBuffer[b][a] * self.attributes['nodemass']
                             projectionAngle = CurrentJointVector.normalized().angleRad(tempForce.normalized())
                             if projectionAngle <= pi/2:
                                 sign = 1
@@ -96,7 +96,7 @@ class engine:
 
                             if isinf(tempForce.length()):
                                 raise TypeError
-                            
+                            '''
                             # AJOUT DE L'ASSERVISSEMENT DE DISTANCE
                             
 
@@ -108,22 +108,22 @@ class engine:
                     # we will be using euler at first
                     procedure = methods['euler']
 
-                    MainAccelBuffer[l][w], MainSpeedBuffer[l][w], MainPosBuffer[l][w] = procedure(AppliedForce, 
+                    MainLinAccelBuffer[l][w], MainLinSpeedBuffer[l][w], MainPosBuffer[l][w] = procedure(AppliedForce, 
                                                                                                     self.attributes['nodemass'],
                                                                                                     pos,
                                                                                                     speed*self.attributes["friction"],
                                                                                                     TimeShift)
                 elif RuleTable[l][w].getRule().__class__.__name__=="virtual":
-                    MainAccelBuffer[l][w], MainSpeedBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0)
+                    MainLinAccelBuffer[l][w], MainLinSpeedBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0)
                 else:
                     # how do I define the pt0 ?????
                     pt0 = Vec3(0,0,0)
-                    MainAccelBuffer[l][w], MainSpeedBuffer[l][w], MainPosBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0), LVecBase3f(tuple(RuleTable[l][w].getPos(frame, pt0)))
+                    MainLinAccelBuffer[l][w], MainLinSpeedBuffer[l][w], MainPosBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0), LVecBase3f(tuple(RuleTable[l][w].getPos(frame, pt0)))
                 
 
         
         
-        return ArrayLinFormat(MainPosBuffer), MainSpeedBuffer, MainAccelBuffer # currently does nothing sry
+        return ArrayLinFormat(MainPosBuffer), MainLinSpeedBuffer, MainLinAccelBuffer # currently does nothing sry
 
     def GetId(self):
         '''

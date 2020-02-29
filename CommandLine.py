@@ -19,12 +19,20 @@ class Console:
         self.Lines = 43
         self.background = OnscreenImage(image = str(MAINDIR)+"/assets/bg.png",pos = (0.65,0,1), parent = base.a2dBottomLeft)
         self.background.setTransparency(TransparencyAttrib.MAlpha)
-        self.SavedLines = [OnscreenText(text = '', pos = (0.02, 0.1 + x*1.1*self.textscale), scale = self.textscale, align = TextNode.ALeft, fg = (1,1,1,1), parent = base.a2dBottomLeft) for x in range(self.Lines)]
+        self.SavedLines = [OnscreenText(text = '', 
+                                            pos = (0.02, 0.1 + x*1.1*self.textscale), 
+                                            scale = self.textscale, 
+                                            align = TextNode.ALeft, 
+                                            fg = (1,1,1,1), 
+                                            parent = base.a2dBottomLeft) for x in range(self.Lines)]
         self.loadConsoleEntry()
         self.commands = self.CommandDictionary
+        self.callBackIndex = -1
         #self.entry.reparent_to(App)
-        base.accept('f1',self.toggle,[base])
-        self.toggle(base) # initialize as hidden
+        base.accept('f1',self.toggle)
+        base.accept('arrow_up',self.callBack,[True])
+        base.accept('arrow_down',self.callBack,[False])
+        self.toggle() # initialize as hidden
         return None
     
     def loadConsoleEntry(self): #-1.76, 0, -0.97
@@ -41,7 +49,7 @@ class Console:
                                     parent = base.a2dBottomLeft)
         return None
     
-    def toggle(self,base):
+    def toggle(self):
         if self.hidden:
             for i in self.SavedLines:
                 i.show()
@@ -60,6 +68,7 @@ class Console:
         return None
     
     def ConvertToFunction(self,data):
+        self.callBackIndex = -1
         self.entry.destroy()
         self.loadConsoleEntry()
         self.ConsoleOutput(" ")
@@ -80,6 +89,14 @@ class Console:
                     Buffer.append("")
             else:
                 Buffer[len(Buffer)-1] += data[x]
+        
+        # update inputData
+        self.InputLines = []
+        for x in self.SavedLines:
+            if x.text[:len(str(MAINDIR))] == str(MAINDIR): # identify as user input
+                self.InputLines.append(x.text[len(str(MAINDIR))+3:])
+
+
         try:
             ChosenCommand = self.commands[Buffer[0]] # check if the command exists
             if len(Buffer)-1 and Buffer[1] == "(" and Buffer[len(Buffer)-1] == ")": # check if the command has some arguments
@@ -126,9 +143,12 @@ class Console:
         return None
     
     def helper(self,index):
+        '''
+        Provides help concerning a given command
+        '''
         i = self.CommandDictionary[index]
-        self.ConsoleOutput("Help concerning command '"+str(index)+"':")
-        self.ConsoleOutput("    associated function name is "+str(i.__name__))
+        self.ConsoleOutput("Help concerning command '%s':" % str(index))
+        self.ConsoleOutput("    associated function name is '%s'" % str(i.__name__))
         self.ConsoleOutput("Documentation provided: ")
         doc = self.TextToLine(str(i.__doc__))
         self.ConsoleOutput("    "+doc)
@@ -137,6 +157,9 @@ class Console:
         return None
     
     def showCommands(self):
+        '''
+        Shows a list of available commands
+        '''
         self.ConsoleOutput("List of available commands: ")
         for i in self.CommandDictionary:
             self.ConsoleOutput("- "+str(i))
@@ -144,6 +167,20 @@ class Console:
         self.ConsoleOutput("Use usage(command) for more details on a specific command")
         return None
 
+    def callBack(self, key : bool):
+        if key: # up key pressed
+            try: # avoid out of range errors
+                if self.callBackIndex < len(self.InputLines):
+                    self.callBackIndex += 1
+                    self.entry.enterText(self.InputLines[self.callBackIndex])
+            except: pass
+        else:
+            try:
+                if self.callBackIndex >= 0:
+                    self.callBackIndex -= 1
+                    self.entry.enterText(([''] + self.InputLines)[self.callBackIndex])
+            except: pass
+        
     def TextToLine(self,text):
         try:
             text = text.replace("\n","")
