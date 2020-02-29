@@ -1,7 +1,11 @@
 # Hull breach Tracking
 This is a dynamic physics engine, created in order to simulate breaches in a metal plate, and the many ways of detecting them, and finding their position <br>
 
-A more advanced readme file will be created once the engine is ready<br><br><br>
+A more advanced readme file will be created once the engine is ready<br>
+### basic controls
+middle mouse button - rotate view<br>
+right click + drag - zoom in/out<br>
+f1 - toggle console<br><br>
 
 estimated progress:
 
