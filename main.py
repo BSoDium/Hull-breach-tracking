@@ -48,6 +48,10 @@ class mainApp(ShowBase):
             "removeTask":undefined,
             "toggleDebugMode":self.debug,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
+            "SetFrame":self.SetFrame,
+            "GetFrame":self.GetFrame,
+            "Play":self.Play,
+            "Pause":self.Pause,
             "exit":stop
         }
         self.UserConsole.create(commandDic)
@@ -74,6 +78,7 @@ class mainApp(ShowBase):
         self.task_mgr.add(self.UpdateScene,'SceneUpdatingTask')
 
         self.SimState = 1 # current frame (when reading the precomputed data)
+        self.is_playing = False
 
         # user variables
         self.SimLenght = 200 # frames
@@ -101,8 +106,9 @@ class mainApp(ShowBase):
         should contain all of the gui stuff
         '''
         # debug
-        print("Computing process completed successfully")
-        print("Loading and displaying content...")
+        self.UserConsole.ConsoleOutput("Computing process completed successfully")
+        self.UserConsole.ConsoleOutput("Loading and displaying content...")
+        self.UserConsole.ConsoleOutput("is_playing = %s" % self.is_playing)
 
         self.taskMgr.add(self.Display,'PostProcessingTask')
         self.Memory.unwrap(wireframe = True)
@@ -114,14 +120,16 @@ class mainApp(ShowBase):
         [DISPLAYING LOOP]
         '''
         if self.SimState < self.SimLenght:
-            try:
-                self.Memory.getFrameData(self.SimState-1).hide()
-            except:
-                pass
-            self.Memory.getFrameData(self.SimState).show()
-            self.SimState += 1
+            if self.is_playing:
+                try:
+                    self.Memory.getFrameData(self.SimState-1).hide()
+                except:
+                    pass
+                self.Memory.getFrameData(self.SimState).show()
+                self.SimState += 1
         else:
-            print("done")
+            self.UserConsole.ConsoleOutput("done")
+            self.is_playing = False
             return task.done
 
         return task.cont
@@ -131,6 +139,29 @@ class mainApp(ShowBase):
         self.dlnp.setHpr(foo)
         return task.cont
 
+    def SetFrame(self,frame):
+        '''
+        Warp to selected frame, and pause the displaying loop
+        '''
+        if frame > self.SimLenght or frame < 0:
+            self.UserConsole.ConsoleOutput("Frame index out of range, could not perform operation")
+            return IndexError
+        # scene updating
+        self.Memory.getFrameData(self.SimState).hide()
+        self.Memory.getFrameData(frame).show()
+        self.is_playing = False
+        self.SimState = frame
+    
+    def GetFrame(self):
+        self.UserConsole.ConsoleOutput("Currently displayed frame is %s out of %d" % (self.SimState,self.SimLenght))
+    
+    def Play(self):
+        self.is_playing = True
+        self.UserConsole.ConsoleOutput("Now Playing from frame %s" % self.SimState)
+    
+    def Pause(self):
+        self.is_playing = False
+        self.UserConsole.ConsoleOutput("Paused")
 
     def debug(self):
         '''
@@ -152,6 +183,8 @@ class mainApp(ShowBase):
         return None
 
 
+
+
 def undefined():
     '''
     This function hasn't been implemented yet
@@ -160,6 +193,7 @@ def undefined():
 
 def stop():
     os._exit(0)
+    
 if __name__=="__main__":
     Simulation = mainApp()
     try:

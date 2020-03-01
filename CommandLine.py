@@ -13,7 +13,7 @@ class Console:
         
     def create(self, CommandDictionary):
         base.a2dBottomLeft.set_bin('background', 123) # avoid drawing order conflict
-        self.CommandDictionary = {**CommandDictionary,**{"usage":self.helper,"help":self.showCommands}} #copy for further use in other methods
+        self.CommandDictionary = {**CommandDictionary,**{"usage":self.helper,"help":self.showCommands}} # copy for further use in other methods
         self.hidden = False
         self.textscale = 0.04
         self.Lines = 43
@@ -103,8 +103,11 @@ class Console:
                 args = Buffer[2:len(Buffer)-1]
                 for i in range(len(args)):
                     try:
-                        args[i] = float(args[i])
-                    except:
+                        if str(int(args[i])) == args[i]:
+                            args[i] = int(args[i])
+                        elif str(float(args[i])) == args[i]:
+                            args[i] = float(args[i])
+                    except ValueError:
                         args[i] = str(args[i])
                 try:
                     ChosenCommand(*args)
@@ -146,14 +149,17 @@ class Console:
         '''
         Provides help concerning a given command
         '''
-        i = self.CommandDictionary[index]
-        self.ConsoleOutput("Help concerning command '%s':" % str(index))
-        self.ConsoleOutput("    associated function name is '%s'" % str(i.__name__))
-        self.ConsoleOutput("Documentation provided: ")
-        doc = self.TextToLine(str(i.__doc__))
-        self.ConsoleOutput("    "+doc)
-        self.ConsoleOutput("Known arguments: ")
-        self.ConsoleOutput("    "+str(i.__code__.co_varnames))
+        try:
+            i = self.CommandDictionary[index]
+            self.ConsoleOutput("Help concerning command '%s':" % str(index))
+            self.ConsoleOutput("associated function name is '%s'" % str(i.__name__))
+            self.ConsoleOutput("Documentation provided: ")
+            doc = self.TextToLine(str(i.__doc__))
+            self.ConsoleOutput(doc)
+            self.ConsoleOutput("Known arguments: ")
+            self.ConsoleOutput(str(i.__code__.co_varnames))
+        except KeyError:
+            self.ConsoleOutput("Unknown command '%s'" % str(index))
         return None
     
     def showCommands(self):
