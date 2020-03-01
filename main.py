@@ -7,6 +7,7 @@ try:
     from DataSaveLib import DataSet
     from Gui import UserInterface
     from CommandLine import Console
+    import matplotlib.pyplot as plt
 except ModuleNotFoundError:
     ErrorMessage = 'failed to load modules'
     sys.exit(ErrorMessage)
@@ -48,6 +49,7 @@ class mainApp(ShowBase):
             "removeTask":undefined,
             "toggleDebugMode":self.debug,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
+            "Track":self.TrackMotion,
             "SetFrame":self.SetFrame,
             "GetFrame":self.GetFrame,
             "Play":self.Play,
@@ -95,7 +97,7 @@ class mainApp(ShowBase):
         [PRECOMPUTING LOOP]
         '''
         if task.frame < self.SimLenght:
-            self.Memory.store(self.ParticleSystem.update(self.dt, self.TaskList, task.frame)) # add every the geometry of each frame to the memory, so we can display it later
+            self.Memory.store(*self.ParticleSystem.update(self.dt, self.TaskList, task.frame)) # add every the geometry of each frame to the memory, so we can display it later
             return task.cont
         else: # end of computing process
             self.transition()
@@ -162,6 +164,57 @@ class mainApp(ShowBase):
     def Pause(self):
         self.is_playing = False
         self.UserConsole.ConsoleOutput("Paused")
+    
+    def TrackMotion(self, 
+                    StartingFrame, 
+                    EndFrame, 
+                    Xindex, 
+                    Yindex,
+                    datatype):
+        '''
+        Displays the requested data for one node in a matplotlib external window
+        Xindex = width index
+        Yindex = length index
+        '''
+        if StartingFrame >= EndFrame or StartingFrame < 0 or EndFrame > self.SimLenght :
+            self.UserConsole.ConsoleOutput("Invalid frame index provided")
+            return None # abort
+        self.UserConsole.ConsoleOutput("Processing...")
+        Pos = []
+        Speed = []
+        Accel = []
+        for x in range(StartingFrame,EndFrame + 1):
+            localPos = self.Memory.getFramePosData(x)[Yindex][Xindex]
+            Pos.append(localPos)
+            if datatype == 'speed' or datatype == 'Speed':
+                if x - StartingFrame - 1 >=0:
+                    Speed.append((localPos - Pos[x - StartingFrame - 1])/self.dt)
+                else:
+                    Speed.append(LVecBase3f(0,0,0))
+                
+            elif datatype == 'accel' or datatype == 'Accel':
+                if x - StartingFrame - 1 >=0:
+                    Speed.append((localPos - Pos[x - StartingFrame - 1])/self.dt)
+                    Accel.append((Speed[x - StartingFrame] - Speed[x - StartingFrame - 1])/self.dt)
+                else:
+                    Speed.append(LVecBase3f(0,0,0))    
+                    Accel.append(LVecBase3f(0,0,0))
+                
+        if datatype == 'speed' or datatype == 'Speed':
+            plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
+                        Speed)
+        elif datatype == 'accel' or datatype == 'Accel':
+            plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
+                        Accel)
+        elif datatype == 'pos' or datatype == 'Pos':
+            plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
+                        Pos)
+        else:
+            self.UserConsole.ConsoleOutput("Wrong datatype provided")
+            return None
+        plt.show()
+        self.UserConsole.ConsoleOutput("Done")
+        return None
 
     def debug(self):
         '''

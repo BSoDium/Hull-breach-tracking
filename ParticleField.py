@@ -124,7 +124,7 @@ class ParticleMesh:
                 self.NodeGeometry[y][x][0] = upper_normals[y][x]
         
         mesh = deepcopy(self.surface.GeomNode) # copy after it has been modified
-        return mesh
+        return mesh, LinArrayFormat(PosState,(Vl,Vw))
 
     def override(self, coord, *args):
         return None

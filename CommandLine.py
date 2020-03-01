@@ -28,6 +28,7 @@ class Console:
         self.loadConsoleEntry()
         self.commands = self.CommandDictionary
         self.callBackIndex = -1
+        self.InputLines = []
         #self.entry.reparent_to(App)
         base.accept('f1',self.toggle)
         base.accept('arrow_up',self.callBack,[True])
@@ -68,7 +69,11 @@ class Console:
         return None
     
     def ConvertToFunction(self,data):
+        # callback stuff
         self.callBackIndex = -1
+        self.InputLines.append(data)
+
+        # gui
         self.entry.destroy()
         self.loadConsoleEntry()
         self.ConsoleOutput(" ")
@@ -89,12 +94,6 @@ class Console:
                     Buffer.append("")
             else:
                 Buffer[len(Buffer)-1] += data[x]
-        
-        # update inputData
-        self.InputLines = []
-        for x in self.SavedLines:
-            if x.text[:len(str(MAINDIR))] == str(MAINDIR): # identify as user input
-                self.InputLines.append(x.text[len(str(MAINDIR))+3:])
 
 
         try:
@@ -137,6 +136,7 @@ class Console:
     
     def ConsoleOutput(self,output):
         #maxsize = self.entry['width']
+        
         maxsize = 73
         discretized = [output[i:i+maxsize] for i in range(0,len(output),maxsize)]
         for i in discretized:
@@ -174,17 +174,18 @@ class Console:
         return None
 
     def callBack(self, key : bool):
+        invertedInput = self.InputLines[::-1]
         if key: # up key pressed
             try: # avoid out of range errors
-                if self.callBackIndex < len(self.InputLines):
+                if self.callBackIndex < len(invertedInput):
                     self.callBackIndex += 1
-                    self.entry.enterText(self.InputLines[self.callBackIndex])
+                    self.entry.enterText(invertedInput[self.callBackIndex])
             except: pass
         else:
             try:
                 if self.callBackIndex >= 0:
                     self.callBackIndex -= 1
-                    self.entry.enterText(([''] + self.InputLines)[self.callBackIndex])
+                    self.entry.enterText(([''] + invertedInput)[self.callBackIndex])
             except: pass
         
     def TextToLine(self,text):
