@@ -8,6 +8,7 @@ try:
     from Gui import UserInterface
     from CommandLine import Console
     import matplotlib.pyplot as plt
+    from direct.stdpy import threading
 except ModuleNotFoundError:
     ErrorMessage = 'failed to load modules'
     sys.exit(ErrorMessage)
@@ -49,7 +50,8 @@ class mainApp(ShowBase):
             "removeTask":undefined,
             "toggleDebugMode":self.debug,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
-            "Track":self.TrackMotion,
+            "toggleIndicators":undefined,
+            "Track":self.init_ThreadGraph,
             "SetFrame":self.SetFrame,
             "GetFrame":self.GetFrame,
             "Play":self.Play,
@@ -60,7 +62,7 @@ class mainApp(ShowBase):
         
         # these are the tasks that will be executed during the sim
         self.TaskList = [ # I know the syntax isn't easy...
-            ["single_static", (10,4), (-3, -1.5, 0.3), [1,2]],
+            ["single_static", (10,4), (-3, -1.5, 0.3), [1,100]],
             #["single_following_sine", (4,1), (400,5,0,(0,0,1)), [0,100]],
             #["single_virtual", (4,5), [0,100]]
         ] 
@@ -82,8 +84,12 @@ class mainApp(ShowBase):
         self.SimState = 1 # current frame (when reading the precomputed data)
         self.is_playing = False
 
+        # chart display threading
+        self.chart_thread = None
+        self.opened_charts = 0
+
         # user variables
-        self.SimLenght = 200 # frames
+        self.SimLenght = 400 # frames
         self.dt = 0.001 # time step for the simulation (in seconds)
 
         # user imput
@@ -121,7 +127,7 @@ class mainApp(ShowBase):
         '''
         [DISPLAYING LOOP]
         '''
-        if self.SimState < self.SimLenght:
+        if self.SimState <= self.SimLenght:
             if self.is_playing:
                 try:
                     self.Memory.getFrameData(self.SimState-1).hide()
@@ -130,6 +136,7 @@ class mainApp(ShowBase):
                 self.Memory.getFrameData(self.SimState).show()
                 self.SimState += 1
         else:
+            self.SimState -= 1 # necessary if we want to know the actual displayed frame
             self.UserConsole.ConsoleOutput("done")
             self.is_playing = False
             return task.done
@@ -145,7 +152,7 @@ class mainApp(ShowBase):
         '''
         Warp to selected frame, and pause the displaying loop
         '''
-        if frame > self.SimLenght or frame < 0:
+        if frame > self.SimLenght or frame <= 0:
             self.UserConsole.ConsoleOutput("Frame index out of range, could not perform operation")
             return IndexError
         # scene updating
@@ -158,13 +165,38 @@ class mainApp(ShowBase):
         self.UserConsole.ConsoleOutput("Currently displayed frame is %s out of %d" % (self.SimState,self.SimLenght))
     
     def Play(self):
+        self.taskMgr.add(self.Display,'PostProcessingTask') # restart player
         self.is_playing = True
+
         self.UserConsole.ConsoleOutput("Now Playing from frame %s" % self.SimState)
     
     def Pause(self):
         self.is_playing = False
         self.UserConsole.ConsoleOutput("Paused")
     
+    def init_ThreadGraph(self,
+                    StartingFrame, 
+                    EndFrame, 
+                    Xindex, 
+                    Yindex,
+                    datatype):
+        if self.chart_thread == None or not self.chart_thread.is_alive():
+            self.opened_charts +=1
+            self.chart_thread = threading.Thread(target = self.TrackMotion, 
+                        args = (StartingFrame, 
+                        EndFrame, 
+                        Xindex, 
+                        Yindex,
+                        datatype))
+            self.chart_thread.start()
+        else:
+            self.opened_charts = 1
+            self.TrackMotion(StartingFrame, 
+                            EndFrame, 
+                            Xindex, 
+                            Yindex,
+                            datatype)
+        
     def TrackMotion(self, 
                     StartingFrame, 
                     EndFrame, 
@@ -173,10 +205,10 @@ class mainApp(ShowBase):
                     datatype):
         '''
         Displays the requested data for one node in a matplotlib external window
-        Xindex = width index
-        Yindex = length index
+        Xindex = length index
+        Yindex = width index
         '''
-        if StartingFrame >= EndFrame or StartingFrame < 0 or EndFrame > self.SimLenght :
+        if StartingFrame >= EndFrame or StartingFrame <= 0 or EndFrame > self.SimLenght :
             self.UserConsole.ConsoleOutput("Invalid frame index provided")
             return None # abort
         self.UserConsole.ConsoleOutput("Processing...")
@@ -184,9 +216,12 @@ class mainApp(ShowBase):
         Speed = []
         Accel = []
         for x in range(StartingFrame,EndFrame + 1):
-            localPos = self.Memory.getFramePosData(x)[Yindex][Xindex]
+            try:
+                localPos = self.Memory.getFramePosData(x)[Xindex][Yindex]
+            except:
+                self.UserConsole.ConsoleOutput("Simulation no ready, please wait")
             Pos.append(localPos)
-            if datatype == 'speed' or datatype == 'Speed':
+            if datatype == 'speed' or datatype == 'Speed': # primitif mais tant pis
                 if x - StartingFrame - 1 >=0:
                     Speed.append((localPos - Pos[x - StartingFrame - 1])/self.dt)
                 else:
@@ -199,7 +234,9 @@ class mainApp(ShowBase):
                 else:
                     Speed.append(LVecBase3f(0,0,0))    
                     Accel.append(LVecBase3f(0,0,0))
-                
+        
+        #plt.figure()
+
         if datatype == 'speed' or datatype == 'Speed':
             plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
                         Speed)
@@ -238,7 +275,7 @@ class mainApp(ShowBase):
 
 
 
-def undefined():
+def undefined(*args):
     '''
     This function hasn't been implemented yet
     '''

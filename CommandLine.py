@@ -78,7 +78,7 @@ class Console:
         self.loadConsoleEntry()
         self.ConsoleOutput(" ")
         self.ConsoleOutput(str(MAINDIR)+">  "+data)
-        self.ConsoleOutput(" ")
+
         Buffer = [""]
         for x in range(len(data)): # I know the way I did this sucks but I didn't want to think a lot
             if data[x] == "(":
@@ -152,11 +152,18 @@ class Console:
         try:
             i = self.CommandDictionary[index]
             self.ConsoleOutput("Help concerning command '%s':" % str(index))
-            self.ConsoleOutput("associated function name is '%s'" % str(i.__name__))
-            self.ConsoleOutput("Documentation provided: ")
+            self.ConsoleOutput("- associated function name is '%s'" % str(i.__name__))
+            self.ConsoleOutput("- Documentation provided: ")
             doc = self.TextToLine(str(i.__doc__))
+            a,j = ' ',0 # remove unnecessary spacing
+            while a==' ':
+                j += 1
+                a = doc[j]
+            doc = doc[j:]
+            
             self.ConsoleOutput(doc)
-            self.ConsoleOutput("Known arguments: ")
+
+            self.ConsoleOutput("- Known arguments: ")
             self.ConsoleOutput(str(i.__code__.co_varnames))
         except KeyError:
             self.ConsoleOutput("Unknown command '%s'" % str(index))
