@@ -8,6 +8,7 @@ try:
     from Gui import UserInterface
     from CommandLine import Console
     import matplotlib.pyplot as plt
+    import matplotlib
     from direct.stdpy import threading
 except ModuleNotFoundError:
     ErrorMessage = 'failed to load modules'
@@ -181,7 +182,6 @@ class mainApp(ShowBase):
                     Yindex,
                     datatype):
         if self.chart_thread == None or not self.chart_thread.is_alive():
-            self.opened_charts +=1
             self.chart_thread = threading.Thread(target = self.TrackMotion, 
                         args = (StartingFrame, 
                         EndFrame, 
@@ -190,13 +190,14 @@ class mainApp(ShowBase):
                         datatype))
             self.chart_thread.start()
         else:
-            self.opened_charts = 1
-            self.TrackMotion(StartingFrame, 
-                            EndFrame, 
-                            Xindex, 
-                            Yindex,
-                            datatype)
+            self.TrackMotion(
+                    StartingFrame, 
+                    EndFrame, 
+                    Xindex, 
+                    Yindex,
+                    datatype)
         
+
     def TrackMotion(self, 
                     StartingFrame, 
                     EndFrame, 
@@ -235,7 +236,6 @@ class mainApp(ShowBase):
                     Speed.append(LVecBase3f(0,0,0))    
                     Accel.append(LVecBase3f(0,0,0))
         
-        #plt.figure()
 
         if datatype == 'speed' or datatype == 'Speed':
             plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
@@ -249,7 +249,10 @@ class mainApp(ShowBase):
         else:
             self.UserConsole.ConsoleOutput("Wrong datatype provided")
             return None
-        plt.show()
+        try:
+            plt.show()
+        except:
+            plt.draw()
         self.UserConsole.ConsoleOutput("Done")
         return None
 
@@ -290,5 +293,5 @@ if __name__=="__main__":
         Simulation.run()
     except SystemExit:
         print("SystemExit successfull, running exception...")
-        sys.exit(0) # avoid annoying systemExit error
+        stop()
 
