@@ -236,7 +236,6 @@ class mainApp(ShowBase):
                     Speed.append(LVecBase3f(0,0,0))    
                     Accel.append(LVecBase3f(0,0,0))
         
-
         if datatype == 'speed' or datatype == 'Speed':
             plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
                         Speed)
