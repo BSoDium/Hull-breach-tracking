@@ -9,7 +9,7 @@ f1 - toggle console<br><br>
 
 estimated progress:
 
-🔵🔵🔵🔵🔵🔵🔵⚪️⚪️⚪️⚪️⚪️⚪️
+🔵🔵🔵🔵🔵🔵🔵🔵⚪️⚪️⚪️⚪️⚪️
 
 
 
