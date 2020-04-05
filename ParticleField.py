@@ -1,7 +1,7 @@
 from panda3d.core import * # needs to be improved later on (maybe)
 from ProceduralGen import *
 from copy import deepcopy
-from physX import engine, HarmoscLink, LinArrayFormat, ArrayLinFormat
+from physX import engine, PhysXNode, LinArrayFormat, ArrayLinFormat
 from NodeStates import State
 
 class ParticleMesh:
@@ -16,8 +16,9 @@ class ParticleMesh:
         self.surface = RectangleSurface(l,w,Vl,Vw)
         
         self.RuleData = [[State("free") for i in range(Vw)] for j in range(Vl)] # node behavior
-
         self.CurrentPosState = self.surface.GetPosData()
+        PosState = LinArrayFormat(self.CurrentPosState, (Vl, Vw))
+        self.Nodes = [[PhysXNode(j,i,PosState[j][i],1,"free") for i in range(Vw)] for j in range(Vl)] # Attention ! Erreur d'indices possible
 
         upper_normals = LinArrayFormat(self.surface.GetNormalData(), (Vl,Vw)) # these are the upper normals,  we need to add link normals
         self.NodeGeometry = [] # initialize
@@ -71,8 +72,6 @@ class ParticleMesh:
         for task in physXtasks: # scan the user data
             chosen_rule = task[0].split("_")
             type, rule = chosen_rule[0], chosen_rule[1]
-            if len(chosen_rule)==3: # means it's a following rule
-                func = chosen_rule[2]
             
             # you need to implement multiple overrides !!!!!
             if rule == "static": # pas tres propre je sais mais il est une heure du mat merde
@@ -91,6 +90,8 @@ class ParticleMesh:
                     self.RuleData[task[1][0]][task[1][1]].setRule("free")
 
             elif rule == "following":
+                func = chosen_rule[2]
+
                 begin, end = task[3][0], task[3][1]
                 settings = [x for x in task[2][:3]] + [Vec3(task[2][3])]
                 if begin <= frame <= end:

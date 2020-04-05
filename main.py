@@ -36,6 +36,9 @@ class mainApp(ShowBase):
 
         # debugging 
         self.setFrameRateMeter(True)
+        self.axis = loader.loadModel('assets/meshes/axis.egg')
+        self.axis.reparentTo(render)
+        self.axis.setScale(2)
 
         # core variables
         self.ParticleSystem = ParticleMesh(20,20,30,10,None) # default size and data (will be displayed when you first open the program)
@@ -90,7 +93,7 @@ class mainApp(ShowBase):
         self.opened_charts = 0
 
         # user variables
-        self.SimLenght = 400 # frames
+        self.SimLenght = 1000 # frames
         self.dt = 0.001 # time step for the simulation (in seconds)
 
         # user imput
@@ -255,6 +258,7 @@ class mainApp(ShowBase):
         self.UserConsole.ConsoleOutput("Done")
         return None
 
+
     def debug(self):
         '''
         Toggles pstats task graph if available. If not, please make sure that pstats is installed on your machine, and execute it using cmd with the command 'pstats'
@@ -273,7 +277,7 @@ class mainApp(ShowBase):
         except:
             self.UserConsole.ConsoleOutput('Could not establish connection with pstats server')
         return None
-
+# end class mainApp
 
 
 

@@ -1,16 +1,17 @@
-from panda3d.core import Vec3, LVecBase3f
+from panda3d.core import Vec3, LVecBase3f, NodePath
 from copy import deepcopy
 from Geometry import crossProd
 from math import isinf, cos, sin, pi
+import NodeStates
 
 class engine:
     def __init__(self): 
         self.Id = "metal_softbody - 4pernode_harmosc" # not sure about the syntax yet
         self.attributes = {
-            "angularRigidconst":10, # kg/m
-            "linearRigidconst":5,
-            "nodemass":0.1, # kg usi
-            "friction":1
+            "linearRigidConst":5, #
+            "linearDefaultPos":2, # should become more dynamic in a future version
+            "nodemass":1, # kg usi
+            "friction":0
 
         }
         self.size = None
@@ -61,44 +62,10 @@ class engine:
                     for x in range(len(neighbours)): # ie 4
                         a,b = neighbours[x]
                         if 0 <= a < width and 0 <= b < length and not RuleTable[b][a].getRule.__class__.__name__=="virtual": # side limit
-
-                            # CALCUL DE LA FORCE GENEREE PAR L'ANGLE DE TORSION
-                            ReferenceNormal = NodeGeometry[0] # la normale qui reste constante et montre l'orientation du noeud
-                            RestingAngle = NodeGeometry[x+1] # +1 because of the reference normal at the begining of the list
-
-                            CurrentJointVector = Vec3(MainPosBuffer[b][a]) - pos
-                            CurrentAngle = CurrentJointVector.normalized().angleDeg(ReferenceNormal.normalized())
-                            
-
-                            delta = CurrentAngle - RestingAngle # ecart
-                            TorqueVect = Vec3(crossProd(CurrentJointVector, ReferenceNormal)).normalized()
-                            resultingTorque = TorqueVect * self.attributes['angularRigidconst'] * delta   # a partir de la mes calculs sont plus qu'approximatifs 
-                        
-                            JointLength = CurrentJointVector.length()
-                            AppliedForce += Vec3(crossProd(resultingTorque, -CurrentJointVector)).normalized() * (resultingTorque.length()/JointLength)  # physique a deux balles
-
-                            # AJOUT DE LA FORCE TRANSMISE PAR LES LIENS RIGIDES
-                            '''
-                            CurrentJointVector *= -1
-                            print("pos = ", MainPosBuffer[b][a])
-                            print("AppliedForce = ",AppliedForce)
-                            print("accel = ", MainLinAccelBuffer[b][a])
-                            tempForce = MainLinAccelBuffer[b][a] * self.attributes['nodemass']
-                            projectionAngle = CurrentJointVector.normalized().angleRad(tempForce.normalized())
-                            if projectionAngle <= pi/2:
-                                sign = 1
-                            else:
-                                sign = -1
-                            projection = CurrentJointVector.normalized() * tempForce.length() * cos(projectionAngle) * sign
-                            
-                            print("projection = ", projection)
-                            AppliedForce -= projection*0.0001 # coefficient obligatoire pour pouvoir observer les effets du bug de transmission
-
-                            if isinf(tempForce.length()):
-                                raise TypeError
-                            '''
-                            # AJOUT DE L'ASSERVISSEMENT DE DISTANCE
-                            
+                            DistVect = Vec3(MainPosBuffer[b][a]) - pos
+                            NormDistVect = DistVect.normalized()
+                            currentL = DistVect.length()
+                            AppliedForce += Vec3(NormDistVect * self.attributes['linearRigidConst']*(currentL - self.attributes['linearDefaultPos']))
 
                     methods = {
                         "euler":NextPos_Euler,
@@ -111,7 +78,7 @@ class engine:
                     MainLinAccelBuffer[l][w], MainLinSpeedBuffer[l][w], MainPosBuffer[l][w] = procedure(AppliedForce, 
                                                                                                     self.attributes['nodemass'],
                                                                                                     pos,
-                                                                                                    speed*self.attributes["friction"],
+                                                                                                    speed*(1-self.attributes["friction"]),
                                                                                                     TimeShift)
                 elif RuleTable[l][w].getRule().__class__.__name__=="virtual":
                     MainLinAccelBuffer[l][w], MainLinSpeedBuffer[l][w] = LVecBase3f(0,0,0), LVecBase3f(0,0,0)
@@ -143,16 +110,68 @@ class engine:
         return self.size
 
 
-class HarmoscLink(engine): # turns out to be useless
-    def __init__(self, index1, index2, rgdCoef, MainPosBuffer):
-        self.Index2d = (index1, index2)
-        self.pos = (MainPosBuffer[index1[0]][index1[1]] + MainPosBuffer[index2[0]][index2[1]]) / 2 # point median
+class PhysXNode: # stores data for each node
+    def __init__(self, index1, index2, pos, frame:int , state:str, Hpr:Vec3 = Vec3(0,0,0)): # frame indicates the starting frame
+
+        self.index2d = (index1, index2)
+        self.frame = 1 # default
+        self.mass = 1 # default (0 generates errors)
+        self.radius = 0.1
+        J = self.mass * self.radius**2
+        self.inertia = [
+            [J , 0 , 0],
+            [0 , J , 0],
+            [0 , 0 , J]
+        ]
+        self.pos = pos # default
+        self.Hpr = Hpr
+        self.linSpeed = (0,0,0)
+        self.linAccel = (0,0,0)
+        self.rotSpeed = (0,0,0) # deg/s (rad trop compliques a gerer)
+        self.rotAccel = (0,0,0) # deg/s**2
+
         self.destroyed = False # may be changed at some point during the sim
-        self.RigidCoef = rgdCoef
-        self.vector = None # currently unused
 
-        return None
+        assert type(state) is str
+        self.state = NodeStates.State(str(state)) # by default
+        self.nodePath = NodePath('Part%s' %str(index1)+"_"+str(index2))
+        self.nodePath.reparentTo(render)
+        self.nodePath.setPos(self.pos)
+        self.nodePath.setHpr(self.Hpr)
+        
+        self.axis = loader.loadModel('assets/meshes/axis.egg')
+        self.axis.reparentTo(self.nodePath)
+        self.axis.hide() # on startup, debugging axis will not be shown
+        self.debugMode = False
+        
+    
+    def update(self,
+        pos,
+        Hpr,
+        linSpeed,
+        linAccel,
+        rotSpeed,
+        rotAccel):
+    
+        self.pos = pos
+        self.Hpr = Hpr
+        self.linSpeed = linSpeed
+        self.linAccel = linAccel
+        self.rotSpeed = rotSpeed
+        self.rotAccel = rotAccel
 
+        self.nodePath.setPos(self.pos)
+        self.nodePath.setHpr(self.Hpr)
+    
+    def toggleDebug(self):
+        if self.debugMode:
+            self.axis.hide()
+        else:
+            self.axis.show()
+        self.debugMode = not self.debugMode
+    
+    def getPos(self):
+        return self.pos
 # engine procedures come next
 
 
@@ -168,7 +187,7 @@ def NextPos_Euler(force, mass, initialPos, initialSpeed, dt):
 
 def LinArrayFormat(data, size):
     '''
-    Converts vertex 2d lists to 3d arrays using the provided size information
+    Converts vertex 1d lists to 2d arrays using the provided size information
     '''
 
     length, width = size[0], size[1] # helps with understanding the function

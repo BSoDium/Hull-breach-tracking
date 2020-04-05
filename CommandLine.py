@@ -4,7 +4,7 @@ from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import *
 import sys,os
 
-MAINDIR = Filename.from_os_specific(os.getcwd())
+MAINDIR = Filename.from_os_specific(os.path.abspath(sys.path[0])).getFullpath()
 
 
 class Console:
@@ -16,15 +16,17 @@ class Console:
         self.CommandDictionary = {**CommandDictionary,**{"usage":self.helper,"help":self.showCommands}} # copy for further use in other methods
         self.hidden = False
         self.textscale = 0.04
-        self.Lines = 43
-        self.background = OnscreenImage(image = str(MAINDIR)+"/assets/bg.png",pos = (0.65,0,1), parent = base.a2dBottomLeft)
+        self.Lines = 47
+        self.font = loader.loadFont(MAINDIR + '/assets/fonts/terminus-ttf-4.47.0/TerminusTTF-4.47.0.ttf')
+        self.background = OnscreenImage(image = str(MAINDIR)+"/assets/images/bg.png",pos = (0.65,0,1), parent = base.a2dBottomLeft)
         self.background.setTransparency(TransparencyAttrib.MAlpha)
         self.SavedLines = [OnscreenText(text = '', 
-                                            pos = (0.02, 0.1 + x*1.1*self.textscale), 
+                                            pos = (0.02, 0.1 + x*self.textscale), 
                                             scale = self.textscale, 
                                             align = TextNode.ALeft, 
                                             fg = (1,1,1,1), 
-                                            parent = base.a2dBottomLeft) for x in range(self.Lines)]
+                                            parent = base.a2dBottomLeft,
+                                            font= self.font) for x in range(self.Lines)]
         self.loadConsoleEntry()
         self.commands = self.CommandDictionary
         self.callBackIndex = -1
@@ -47,7 +49,8 @@ class Console:
                                     numLines = 1,
                                     focus=True,
                                     width = 40,
-                                    parent = base.a2dBottomLeft)
+                                    parent = base.a2dBottomLeft,
+                                    entryFont = self.font)
         return None
     
     def toggle(self):
