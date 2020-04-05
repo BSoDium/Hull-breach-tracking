@@ -49,18 +49,19 @@ class mainApp(ShowBase):
         self.UserConsole = Console()
         commandDic = {
             "recompute":undefined, # I still need to code those
-            "addTask":undefined,
-            "showActiveTasks":undefined,
-            "removeTask":undefined,
+            "addTask":self.addTask,
+            "showActiveTasks":self.showActiveTasks,
+            "removeTask":self.delTask,
             "toggleDebugMode":self.debug,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
             "toggleIndicators":undefined,
             "Track":self.init_ThreadGraph,
-            "SetFrame":self.SetFrame,
-            "GetFrame":self.GetFrame,
-            "Play":self.Play,
-            "Pause":self.Pause,
-            "exit":stop
+            "setFrame":self.SetFrame,
+            "getFrame":self.GetFrame,
+            "play":self.Play,
+            "pause":self.Pause,
+            "exit":stop,
+            "progressbar":self.progressBarDemo
         }
         self.UserConsole.create(commandDic)
         
@@ -157,7 +158,7 @@ class mainApp(ShowBase):
         Warp to selected frame, and pause the displaying loop
         '''
         if frame > self.SimLenght or frame <= 0:
-            self.UserConsole.ConsoleOutput("Frame index out of range, could not perform operation")
+            self.UserConsole.ConsoleOutput("Frame index out of range, could not perform operation", (1,0,0,1))
             return IndexError
         # scene updating
         self.Memory.getFrameData(self.SimState).hide()
@@ -166,13 +167,18 @@ class mainApp(ShowBase):
         self.SimState = frame
     
     def GetFrame(self):
+        '''
+        outputs the current frame (the one displayed on screen atm)
+        '''
         self.UserConsole.ConsoleOutput("Currently displayed frame is %s out of %d" % (self.SimState,self.SimLenght))
     
     def Play(self):
-        self.taskMgr.add(self.Display,'PostProcessingTask') # restart player
-        self.is_playing = True
-
-        self.UserConsole.ConsoleOutput("Now Playing from frame %s" % self.SimState)
+        if not self.taskMgr.hasTaskNamed('ComputingTask'):
+            self.taskMgr.add(self.Display,'PostProcessingTask') # restart player
+            self.is_playing = True
+            self.UserConsole.ConsoleOutput("Now Playing from frame %s" % self.SimState)
+        else:
+            self.UserConsole.ConsoleOutput("Please wait for the simulation to end, positionnal data isn't available yet", (1,0,0,1))
     
     def Pause(self):
         self.is_playing = False
@@ -213,7 +219,7 @@ class mainApp(ShowBase):
         Yindex = width index
         '''
         if StartingFrame >= EndFrame or StartingFrame <= 0 or EndFrame > self.SimLenght :
-            self.UserConsole.ConsoleOutput("Invalid frame index provided")
+            self.UserConsole.ConsoleOutput("Invalid frame index provided", (1,0,0,1))
             return None # abort
         self.UserConsole.ConsoleOutput("Processing...")
         Pos = []
@@ -223,7 +229,7 @@ class mainApp(ShowBase):
             try:
                 localPos = self.Memory.getFramePosData(x)[Xindex][Yindex]
             except:
-                self.UserConsole.ConsoleOutput("Simulation no ready, please wait")
+                self.UserConsole.ConsoleOutput("Simulation is not ready, please wait", (1,0,0,1))
             Pos.append(localPos)
             if datatype == 'speed' or datatype == 'Speed': # primitif mais tant pis
                 if x - StartingFrame - 1 >=0:
@@ -249,15 +255,30 @@ class mainApp(ShowBase):
             plt.plot([self.dt*i for i in range(StartingFrame, EndFrame + 1)],
                         Pos)
         else:
-            self.UserConsole.ConsoleOutput("Wrong datatype provided")
+            self.UserConsole.ConsoleOutput("Wrong datatype provided", (1,0,0,1))
             return None
         try:
             plt.show()
         except:
             plt.draw()
-        self.UserConsole.ConsoleOutput("Done")
+        self.UserConsole.ConsoleOutput("Done", (0,1,0,1))
         return None
 
+    def showActiveTasks(self):
+        for x in self.TaskList:
+            self.UserConsole.ConsoleOutput(str(x))
+
+    def addTask(self,
+        type:str,
+        *extraArgs):
+        '''
+        adds a constraint to the node
+        '''
+        self.TaskList.append([type, extraArgs])
+        return None
+    
+    def delTask(self,index):
+        return None
 
     def debug(self):
         '''
@@ -269,14 +290,31 @@ class mainApp(ShowBase):
                 assert PStatClient.isConnected
                 self.using_pstats = True
                 portVar = ConfigVariableString('pstats-port')
-                self.UserConsole.ConsoleOutput('Connected to pstats server at port %s' % portVar.getValue())
+                self.UserConsole.ConsoleOutput('Connected to pstats server at port %s' % portVar.getValue(), (0,1,0,1))
             else:
                 PStatClient.disconnect()
                 self.using_pstats = False
                 self.UserConsole.ConsoleOutput('Disconnected from pstats server successfully')
         except:
-            self.UserConsole.ConsoleOutput('Could not establish connection with pstats server')
+            self.UserConsole.ConsoleOutput('Could not establish connection with pstats server', (1,0,0,1))
         return None
+    
+    # this demo uses the 'edit' mode of the ConsoleOuput routine 
+    def progressBarDemo(self):
+        self.taskMgr.add(self.progressbarUpdate, "progressbarDemo")
+        self.demodog = 0
+    
+    def progressbarUpdate(self, task):
+        limit = 50
+        if self.demodog <= limit:
+            self.UserConsole.ConsoleOutput('[downloading '+"{0:0=3d}".format(2*self.demodog)+'%  |' + '█'*self.demodog + ' '*(limit-self.demodog) + '|',
+                                            color=Vec4((limit-self.demodog)/limit, self.demodog/limit, 0, 1), 
+                                            mode = 'edit')
+            self.demodog += 1
+            return task.cont
+        else: return task.done
+        
+
 # end class mainApp
 
 

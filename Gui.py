@@ -40,6 +40,7 @@ class UserInterface:
             self.window_properties.setSize(screensize)
         else:
             self.window_properties.setFullscreen(0)
+            
         
         base.win.requestProperties(self.window_properties)
     

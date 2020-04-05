@@ -21,7 +21,7 @@ class Console:
         self.background = OnscreenImage(image = str(MAINDIR)+"/assets/images/bg.png",pos = (0.65,0,1), parent = base.a2dBottomLeft)
         self.background.setTransparency(TransparencyAttrib.MAlpha)
         self.SavedLines = [OnscreenText(text = '', 
-                                            pos = (0.02, 0.1 + x*self.textscale), 
+                                            pos = (0.01, 0.1 + x*self.textscale), 
                                             scale = self.textscale, 
                                             align = TextNode.ALeft, 
                                             fg = (1,1,1,1), 
@@ -35,6 +35,9 @@ class Console:
         base.accept('f1',self.toggle)
         base.accept('arrow_up',self.callBack,[True])
         base.accept('arrow_down',self.callBack,[False])
+
+        self.ConsoleOutput('- Panda3d runtime console by Balrog -',color = Vec4(0,0,1,1))
+        self.ConsoleOutput('successfully loaded all components',color = Vec4(0,1,0,1))
         self.toggle() # initialize as hidden
         return None
     
@@ -42,7 +45,7 @@ class Console:
         self.entry = DirectEntry(scale=self.textscale,
                                     frameColor=(0,0,0,1),
                                     text_fg = (1,1,1,1),
-                                    pos = (0.025, 0, 0.03),
+                                    pos = (0.015, 0, 0.03),
                                     overflow = 1,
                                     command=self.ConvertToFunction,
                                     initialText="",
@@ -80,23 +83,30 @@ class Console:
         self.entry.destroy()
         self.loadConsoleEntry()
         self.ConsoleOutput(" ")
-        self.ConsoleOutput(str(MAINDIR)+">  "+data)
+        self.ConsoleOutput(str(MAINDIR)+"> "+data)
 
         Buffer = [""]
         for x in range(len(data)): # I know the way I did this sucks but I didn't want to think a lot
             if data[x] == "(":
                 Buffer.append("(")
-                if x != len(data) - 1:
+                if x != len(data) - 1 and data[x+1] != ")":
                     Buffer.append("")
+                else:pass
             elif data[x] == ")":
                 Buffer.append(")")
                 if x != len(data) - 1:
                     Buffer.append("")
+                else:pass
             elif data[x] == ",":
                 if x != len(data) - 1:
                     Buffer.append("")
+                else:pass
             else:
                 Buffer[len(Buffer)-1] += data[x]
+
+        # check for unnecessary spaces
+        for i in range(len(Buffer)):
+            Buffer[i] = Buffer[i].strip()
 
 
         try:
@@ -114,14 +124,14 @@ class Console:
                 try:
                     ChosenCommand(*args)
                 except:
-                    self.ConsoleOutput("Wrong arguments provided")
+                    self.ConsoleOutput("Wrong arguments provided", (1,0,0,1))
             elif len(Buffer) - 1 and Buffer[len(Buffer)-1] != ")":
-                self.ConsoleOutput('Missing parenthesis ")" in "'+ data + '"')
+                self.ConsoleOutput('Missing parenthesis ")" in "'+ data + '"', (1,0,0,1))
             else:
                 try:
                     ChosenCommand()
                 except:
-                    self.ConsoleOutput('This command requires (at least) one argument')
+                    self.ConsoleOutput('This command requires (at least) one argument', (1,0,0,1))
 
         except:
             self.CommandError(Buffer[0])
@@ -129,23 +139,32 @@ class Console:
         return None
 
     def SError(self,report):
-        self.ConsoleOutput("Traceback (most recent call last):")
-        self.ConsoleOutput("Incorrect use of the "+str(report)+" command")
+        self.ConsoleOutput("Traceback (most recent call last):", (1,0,0,1))
+        self.ConsoleOutput("Incorrect use of the "+str(report)+" command", (1,0,0,1))
         return None
     
     def CommandError(self,report):
-        self.ConsoleOutput("Traceback (most recent call last):")
-        self.ConsoleOutput("SyntaxError: command "+str(report)+" is not defined")
+        self.ConsoleOutput("Traceback (most recent call last):", (1,0,0,1))
+        self.ConsoleOutput("SyntaxError: command "+str(report)+" is not defined", (1,0,0,1))
     
-    def ConsoleOutput(self,output):
+    def ConsoleOutput(self,output, color:Vec4 = Vec4(1,1,1,1), mode:str = 'add'):
         #maxsize = self.entry['width']
         
-        maxsize = 73
+        maxsize = 81
+        #maxsize = 66 # hermit font
         discretized = [output[i:i+maxsize] for i in range(0,len(output),maxsize)]
-        for i in discretized:
-            for x in range(self.Lines-1,0,-1):
-                self.SavedLines[x].text = self.SavedLines[x-1].text
-            self.SavedLines[0].text = i
+        if mode == 'add':
+            for i in discretized: # for each line
+                for x in range(self.Lines-1,0,-1):
+                    self.SavedLines[x].text = self.SavedLines[x-1].text
+                    self.SavedLines[x].fg = self.SavedLines[x-1].fg
+                self.SavedLines[0].text = i
+                self.SavedLines[0].fg = color
+        elif mode == 'edit':
+            n = len(discretized)
+            for i in range(n):
+                self.SavedLines[i].text = discretized[n - i - 1]
+                self.SavedLines[i].fg = color
         return None
     
     def helper(self,index):
@@ -158,18 +177,13 @@ class Console:
             self.ConsoleOutput("- associated function name is '%s'" % str(i.__name__))
             self.ConsoleOutput("- Documentation provided: ")
             doc = self.TextToLine(str(i.__doc__))
-            a,j = ' ',0 # remove unnecessary spacing
-            while a==' ':
-                j += 1
-                a = doc[j]
-            doc = doc[j:]
             
-            self.ConsoleOutput(doc)
+            self.ConsoleOutput(doc.strip())
 
             self.ConsoleOutput("- Known arguments: ")
             self.ConsoleOutput(str(i.__code__.co_varnames))
         except KeyError:
-            self.ConsoleOutput("Unknown command '%s'" % str(index))
+            self.ConsoleOutput("Unknown command '%s'" % str(index), (1,0,0,1))
         return None
     
     def showCommands(self):
