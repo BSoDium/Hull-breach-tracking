@@ -85,58 +85,87 @@ class Console:
         self.ConsoleOutput(" ")
         self.ConsoleOutput(str(MAINDIR)+"> "+data)
 
-        Buffer = [""]
-        for x in range(len(data)): # I know the way I did this sucks but I didn't want to think a lot
-            if data[x] == "(":
-                Buffer.append("(")
-                if x != len(data) - 1 and data[x+1] != ")":
-                    Buffer.append("")
-                else:pass
-            elif data[x] == ")":
-                Buffer.append(")")
-                if x != len(data) - 1:
-                    Buffer.append("")
-                else:pass
-            elif data[x] == ",":
-                if x != len(data) - 1:
-                    Buffer.append("")
-                else:pass
-            else:
-                Buffer[len(Buffer)-1] += data[x]
+        Buffer = []
+        ind = data.find('(')
+        if ind <= 0: # no occurence
+            Buffer.append(data)
+        else:
+            Buffer.append(data[0:ind]) # indentify keyword
+            data = data[ind:len(data)] # strip the string as we move along
+            if not(data[0] == '(' and data[len(data)-1] == ')'): # closing parenthesis syntax stuff
+                self.ConsoleOutput('Missing parenthesis ")" in "'+ Buffer[0] + data + '"', (1,0,0,1))
+                return None
+            else:pass
 
-        # check for unnecessary spaces
-        for i in range(len(Buffer)):
-            Buffer[i] = Buffer[i].strip()
+            data = data[1:len(data)-1] # cut these useless '()' out
 
+            left = find_all('(', data)
+            right = find_all(')', data)
+            if len(left) != len(right): # unmatched parethesis error
+                self.ConsoleOutput('SyntaxError: unmatched parenthesis found in expression', (1,0,0,1))
+            # we need to split the list according to the parenthesis structure 
+            
+            nl = len(left)
+            for i in range(nl):
+                temp = data[left[i]:right[i]+1].replace(',', '|') 
+                temp = temp[1:len(temp)-1]
+                data = data[:left[i]] + temp + data[right[i]+1:]
 
-        try:
-            ChosenCommand = self.commands[Buffer[0]] # check if the command exists
-            if len(Buffer)-1 and Buffer[1] == "(" and Buffer[len(Buffer)-1] == ")": # check if the command has some arguments
-                args = Buffer[2:len(Buffer)-1]
-                for i in range(len(args)):
-                    try:
-                        if str(int(args[i])) == args[i]:
-                            args[i] = int(args[i])
-                        elif str(float(args[i])) == args[i]:
-                            args[i] = float(args[i])
-                    except ValueError:
-                        args[i] = str(args[i])
+            Buffer += data.split(',') # identify arguments
+            for i in range(len(Buffer)):
+                Buffer[i] = Buffer[i].strip()
+                if '|' in Buffer[i]:
+                    Buffer[i] = Buffer[i].split('|') # internal tuples
+                    for j in range(len(Buffer[i])):
+                        Buffer[i][j] = Buffer[i][j].strip()     
+            # now the string has been converted into a readable list
+
+            for j in range(1, len(Buffer)):
                 try:
-                    ChosenCommand(*args)
-                except:
+                    if str(int(Buffer[j])) == Buffer[j]:
+                        Buffer[j] = int(Buffer[j])
+                    elif str(float(Buffer[j])) == Buffer[j]:
+                        Buffer[j] = float(Buffer[j])
+                except ValueError:
+                    if type(Buffer[j]) is str:
+                        pass 
+                    else: Buffer[j] = str(Buffer[j])
+                except TypeError:
+                    if type(Buffer[j]) is list:
+                        for t in range(len(Buffer[j])): # a recursive algorithm might have been a better option
+                            try:
+                                if str(int(Buffer[j][t])) == Buffer[j][t]:
+                                    Buffer[j][t] = int(Buffer[j][t])
+                                elif str(float(Buffer[j][t])) == Buffer[j][t]:
+                                    Buffer[j][t] = float(Buffer[j][t])
+                            except ValueError:
+                                if type(Buffer[j][t]) is str:
+                                    pass 
+                                else: Buffer[j][t] = str(Buffer[j][t])
+                        Buffer[j] = tuple(Buffer[j])
+
+                # formating is done, let's head over to the execution
+        
+        try:
+            ChosenCommand = self.commands[Buffer[0]]
+            if len(Buffer)-1 and Buffer[1] != '': # several arguments have been provided
+                try:
+                    ChosenCommand(*Buffer[1:])
+                    return None
+                except TypeError:
                     self.ConsoleOutput("Wrong arguments provided", (1,0,0,1))
-            elif len(Buffer) - 1 and Buffer[len(Buffer)-1] != ")":
-                self.ConsoleOutput('Missing parenthesis ")" in "'+ data + '"', (1,0,0,1))
+                    return None
             else:
                 try:
                     ChosenCommand()
-                except:
+                    return None
+                except TypeError:
                     self.ConsoleOutput('This command requires (at least) one argument', (1,0,0,1))
-
+                    return None
         except:
             self.CommandError(Buffer[0])
-        
         return None
+        
 
     def SError(self,report):
         self.ConsoleOutput("Traceback (most recent call last):", (1,0,0,1))
@@ -173,15 +202,23 @@ class Console:
         '''
         try:
             i = self.CommandDictionary[index]
-            self.ConsoleOutput("Help concerning command '%s':" % str(index))
+            self.ConsoleOutput("Help concerning command '%s':" % str(index), color = (0.243,0.941,1,1))
             self.ConsoleOutput("- associated function name is '%s'" % str(i.__name__))
             self.ConsoleOutput("- Documentation provided: ")
             doc = self.TextToLine(str(i.__doc__))
-            
-            self.ConsoleOutput(doc.strip())
-
+            if not doc == str(None):
+                self.ConsoleOutput(doc.strip())
+            else:
+                self.ConsoleOutput("No docstring found")
             self.ConsoleOutput("- Known arguments: ")
-            self.ConsoleOutput(str(i.__code__.co_varnames))
+            
+            arg = list(i.__code__.co_varnames)
+            del arg[0] # remove the self argument
+            arg = str(arg)
+            if len(arg)-2:
+                self.ConsoleOutput(str(arg)[1:len(str(arg))-1]) # remove brackets
+            else:
+                self.ConsoleOutput("No arguments required")
         except KeyError:
             self.ConsoleOutput("Unknown command '%s'" % str(index), (1,0,0,1))
         return None
@@ -190,7 +227,7 @@ class Console:
         '''
         Shows a list of available commands
         '''
-        self.ConsoleOutput("List of available commands: ")
+        self.ConsoleOutput("List of available commands: ", color = (0.243,0.941,1,1))
         for i in self.CommandDictionary:
             self.ConsoleOutput("- "+str(i))
         self.ConsoleOutput(" ")
@@ -218,3 +255,12 @@ class Console:
         except:
             pass
         return text
+
+def find_all(sample, string):
+    n = len(sample)
+    poslist = []
+    for i in range(len(string)-n+1):
+        if string[i:i+n] == sample:
+            poslist.append(i)
+        else:pass
+    return poslist

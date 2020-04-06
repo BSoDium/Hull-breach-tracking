@@ -52,12 +52,13 @@ class mainApp(ShowBase):
             "addTask":self.addTask,
             "showActiveTasks":self.showActiveTasks,
             "removeTask":self.delTask,
-            "toggleDebugMode":self.debug,
+            "toggleDebugMode":undefined,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
             "toggleIndicators":undefined,
             "Track":self.init_ThreadGraph,
             "setFrame":self.SetFrame,
             "getFrame":self.GetFrame,
+            "pstats":self.pstats,
             "play":self.Play,
             "pause":self.Pause,
             "exit":stop,
@@ -94,7 +95,7 @@ class mainApp(ShowBase):
         self.opened_charts = 0
 
         # user variables
-        self.SimLenght = 1000 # frames
+        self.SimLenght = 100 # frames
         self.dt = 0.001 # time step for the simulation (in seconds)
 
         # user imput
@@ -119,7 +120,7 @@ class mainApp(ShowBase):
         should contain all of the gui stuff
         '''
         # debug
-        self.UserConsole.ConsoleOutput("Computing process completed successfully")
+        self.UserConsole.ConsoleOutput("Computing process completed successfully", color=(0,1,0,1))
         self.UserConsole.ConsoleOutput("Loading and displaying content...")
         self.UserConsole.ConsoleOutput("is_playing = %s" % self.is_playing)
 
@@ -280,7 +281,7 @@ class mainApp(ShowBase):
     def delTask(self,index):
         return None
 
-    def debug(self):
+    def pstats(self):
         '''
         Toggles pstats task graph if available. If not, please make sure that pstats is installed on your machine, and execute it using cmd with the command 'pstats'
         '''
@@ -301,6 +302,9 @@ class mainApp(ShowBase):
     
     # this demo uses the 'edit' mode of the ConsoleOuput routine 
     def progressBarDemo(self):
+        '''
+        this function animates a tiny progress bar demo (showcases the console line edit mode)
+        '''
         self.taskMgr.add(self.progressbarUpdate, "progressbarDemo")
         self.demodog = 0
     
