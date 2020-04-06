@@ -1,8 +1,11 @@
-from panda3d.core import Vec3, LVecBase3f, NodePath
+from panda3d.core import Vec3, LVecBase3f, NodePath, Filename
 from copy import deepcopy
 from Geometry import crossProd
 from math import isinf, cos, sin, pi
-import NodeStates
+import NodeStates, os, sys
+
+
+MAINDIR = Filename.from_os_specific(os.path.abspath(sys.path[0])).getFullpath()
 
 class engine:
     def __init__(self): 
@@ -139,7 +142,7 @@ class PhysXNode: # stores data for each node
         self.nodePath.setPos(self.pos)
         self.nodePath.setHpr(self.Hpr)
         
-        self.axis = loader.loadModel('assets/meshes/axis.egg')
+        self.axis = loader.loadModel(MAINDIR+'/assets/meshes/axis.egg')
         self.axis.reparentTo(self.nodePath)
         self.axis.hide() # on startup, debugging axis will not be shown
         self.debugMode = False

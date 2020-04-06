@@ -11,7 +11,7 @@ class Console:
     def __init__(self):
         return None
         
-    def create(self, CommandDictionary):
+    def create(self, CommandDictionary, event:str = "f1"):
         base.a2dBottomLeft.set_bin('background', 123) # avoid drawing order conflict
         self.CommandDictionary = {**CommandDictionary,**{"usage":self.helper,"help":self.showCommands}} # copy for further use in other methods
         self.hidden = False
@@ -32,7 +32,7 @@ class Console:
         self.callBackIndex = -1
         self.InputLines = []
         #self.entry.reparent_to(App)
-        base.accept('f1',self.toggle)
+        base.accept(event,self.toggle)
         base.accept('arrow_up',self.callBack,[True])
         base.accept('arrow_down',self.callBack,[False])
 
@@ -103,12 +103,13 @@ class Console:
             right = find_all(')', data)
             if len(left) != len(right): # unmatched parethesis error
                 self.ConsoleOutput('SyntaxError: unmatched parenthesis found in expression', (1,0,0,1))
+                return None
             # we need to split the list according to the parenthesis structure 
             
             nl = len(left)
             for i in range(nl):
                 temp = data[left[i]:right[i]+1].replace(',', '|') 
-                temp = temp[1:len(temp)-1]
+                temp = ' '+temp[1:len(temp)-1]+' ' # the spaces compensate the index gap
                 data = data[:left[i]] + temp + data[right[i]+1:]
 
             Buffer += data.split(',') # identify arguments
@@ -124,24 +125,26 @@ class Console:
                 try:
                     if str(int(Buffer[j])) == Buffer[j]:
                         Buffer[j] = int(Buffer[j])
-                    elif str(float(Buffer[j])) == Buffer[j]:
+                except:
+                    pass
+                try:
+                    if str(float(Buffer[j])) == Buffer[j]:
                         Buffer[j] = float(Buffer[j])
                 except ValueError:
-                    if type(Buffer[j]) is str:
-                        pass 
-                    else: Buffer[j] = str(Buffer[j])
+                    Buffer[j] = str(Buffer[j])
                 except TypeError:
                     if type(Buffer[j]) is list:
                         for t in range(len(Buffer[j])): # a recursive algorithm might have been a better option
                             try:
                                 if str(int(Buffer[j][t])) == Buffer[j][t]:
                                     Buffer[j][t] = int(Buffer[j][t])
-                                elif str(float(Buffer[j][t])) == Buffer[j][t]:
+                            except ValueError:
+                                pass
+                            try:
+                                if str(float(Buffer[j][t])) == Buffer[j][t]:
                                     Buffer[j][t] = float(Buffer[j][t])
                             except ValueError:
-                                if type(Buffer[j][t]) is str:
-                                    pass 
-                                else: Buffer[j][t] = str(Buffer[j][t])
+                                Buffer[j][t] = str(Buffer[j][t])
                         Buffer[j] = tuple(Buffer[j])
 
                 # formating is done, let's head over to the execution
@@ -169,12 +172,12 @@ class Console:
 
     def SError(self,report):
         self.ConsoleOutput("Traceback (most recent call last):", (1,0,0,1))
-        self.ConsoleOutput("Incorrect use of the "+str(report)+" command", (1,0,0,1))
+        self.ConsoleOutput("Incorrect use of the '"+str(report)+"' command", (1,0,0,1))
         return None
     
     def CommandError(self,report):
         self.ConsoleOutput("Traceback (most recent call last):", (1,0,0,1))
-        self.ConsoleOutput("SyntaxError: command "+str(report)+" is not defined", (1,0,0,1))
+        self.ConsoleOutput("SyntaxError: command '"+str(report)+"' is not defined", (1,0,0,1))
     
     def ConsoleOutput(self,output, color:Vec4 = Vec4(1,1,1,1), mode:str = 'add'):
         #maxsize = self.entry['width']

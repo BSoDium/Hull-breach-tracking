@@ -27,7 +27,7 @@ except:
 
 
 
-
+MAINDIR = Filename.from_os_specific(os.path.abspath(sys.path[0])).getFullpath()
 sys.stdout = open('output.log', 'w') # debug
 
 class mainApp(ShowBase):
@@ -36,7 +36,8 @@ class mainApp(ShowBase):
 
         # debugging 
         self.setFrameRateMeter(True)
-        self.axis = loader.loadModel('assets/meshes/axis.egg')
+        self.frameRateMeter.setFont(loader.loadFont(MAINDIR+'/assets/fonts/terminus-ttf-4.47.0/TerminusTTF-4.47.0.ttf'))
+        self.axis = loader.loadModel(MAINDIR+'/assets/meshes/axis.egg')
         self.axis.reparentTo(render)
         self.axis.setScale(2)
 
@@ -55,7 +56,7 @@ class mainApp(ShowBase):
             "toggleDebugMode":undefined,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
             "toggleIndicators":undefined,
-            "Track":self.init_ThreadGraph,
+            "track":self.init_ThreadGraph,
             "setFrame":self.SetFrame,
             "getFrame":self.GetFrame,
             "pstats":self.pstats,
@@ -68,7 +69,7 @@ class mainApp(ShowBase):
         
         # these are the tasks that will be executed during the sim
         self.TaskList = [ # I know the syntax isn't easy...
-            ["single_static", (10,4), (-3, -1.5, 0.3), [1,100]],
+            ["single_static", (10,4), (-3, -1.5, 0.3), (1,100)],
             #["single_following_sine", (4,1), (400,5,0,(0,0,1)), [0,100]],
             #["single_virtual", (4,5), [0,100]]
         ] 
@@ -275,7 +276,7 @@ class mainApp(ShowBase):
         '''
         adds a constraint to the node
         '''
-        self.TaskList.append([type, extraArgs])
+        self.TaskList.append([type, *extraArgs])
         return None
     
     def delTask(self,index):
