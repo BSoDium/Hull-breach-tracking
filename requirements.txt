@@ -1,4 +1,4 @@
-panda3d>=1.10.4.1
+panda3d
 numpy
 pypresence
 pywin32
