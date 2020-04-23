@@ -6,7 +6,7 @@ try:
     from ParticleField import ParticleMesh
     from DataSaveLib import DataSet
     from Gui import UserInterface
-    from CommandLine import Console
+    from pconsole import Console
     import matplotlib.pyplot as plt
     import matplotlib
     from direct.stdpy import threading
@@ -53,6 +53,7 @@ class mainApp(ShowBase):
             "addTask":self.addTask,
             "showActiveTasks":self.showActiveTasks,
             "removeTask":self.delTask,
+            "highlight":undefined,
             "toggleDebugMode":undefined,
             "toggleFullscreen":self.Gui2d.toggleFullScreen,
             "toggleIndicators":undefined,
@@ -65,15 +66,41 @@ class mainApp(ShowBase):
             "exit":stop,
             "progressbar":self.progressBarDemo
         }
-        self.UserConsole.create(commandDic)
+        self.UserConsole.create(commandDic, app = self)
         
         # these are the tasks that will be executed during the sim
         self.TaskList = [ # I know the syntax isn't easy...
-            ["single_static", (10,4), (-3, -1.5, 0.3), (1,100)],
+            ["single_static", (10,4), (-3, -1.5, 0.3), (2,100)],
             #["single_following_sine", (4,1), (400,5,0,(0,0,1)), [0,100]],
             #["single_virtual", (4,5), [0,100]]
         ] 
+        '''
+        ----------- More details on the PhysXTask syntax -----------
+        there are three types of tasks: single, line, column
+        -- Details:
+        - a single task overrides the position of only one node. This particular
+        physXNode will not be simulated as a physical object, and will move according to
+        the applied rule and/or law
+        - a line or column override does the same thing, but on an entire line/column
+        
+        three possible behavior/rules: static, following, virtual
+        -- Details:
+        - a static rule keeps the node in place, other nodes can however still interact with 
+        the static node
+        - a following rule forces the node to follow a law of evolution in 3d space
+        - a virtual rule 'destroys' it, therefore there will be absolutely 
+        no interaction between the node and its environnement
 
+        the following rule requires a third argument, which is the followed law/function. 
+        atm, only the sine function has been implemented
+
+        ----------- Actually writing this down -----------
+        ['single_static', (LineCoord, ColumnCoord), (x, y, z), (StartingFrame, EndingFrame)]
+        ['line_static', (LineCoord), (center_x, center_y, center_z), (StartingFrame, EndingFrame)]
+        ['column_static', (ColumnCoord), (center_x, center_y, center_z), (StartingFrame, EndingFrame)]
+        ['single_following_sine', (LineCoord, ColumnCoord), ()]
+
+        '''
         # lighting
         dlight = DirectionalLight('dlight')
         dlight.setColor(VBase4(0.9, 0.9, 1, 1))
@@ -97,7 +124,7 @@ class mainApp(ShowBase):
 
         # user variables
         self.SimLenght = 100 # frames
-        self.dt = 0.001 # time step for the simulation (in seconds)
+        self.dt = 0.01 # time step for the simulation (in seconds)
 
         # user imput
         self.accept("f11", self.Gui2d.toggleFullScreen)
@@ -110,7 +137,7 @@ class mainApp(ShowBase):
         [PRECOMPUTING LOOP]
         '''
         if task.frame < self.SimLenght:
-            self.Memory.store(*self.ParticleSystem.update(self.dt, self.TaskList, task.frame)) # add every the geometry of each frame to the memory, so we can display it later
+            self.Memory.store(*self.ParticleSystem.update(self.dt, self.TaskList, task.frame, self.Memory)) # add every the geometry of each frame to the memory, so we can display it later
             return task.cont
         else: # end of computing process
             self.transition()

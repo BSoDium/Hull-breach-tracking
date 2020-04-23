@@ -107,7 +107,7 @@ class RectangleSurface:
             
             PosOutput.append(BufferPosList)
 
-        return PosOutput[0] # format: two dimensionnal array, one sublist per encountered geom, each sublist contains LVecBase3f positional values (we only need the first and only geom)
+        return PosOutput[0] # format: 1D array, one sublist per encountered geom, each sublist contains LVecBase3f positional values (we only need the first and only geom)
     
     def GetNormalData(self):
         '''

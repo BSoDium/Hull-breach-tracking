@@ -131,7 +131,10 @@ class Console:
                     if str(float(Buffer[j])) == Buffer[j]:
                         Buffer[j] = float(Buffer[j])
                 except ValueError:
-                    Buffer[j] = str(Buffer[j])
+                    if str(Buffer[j]) != 'None':
+                        Buffer[j] = str(Buffer[j])
+                    else:
+                        Buffer[j] = None
                 except TypeError:
                     if type(Buffer[j]) is list:
                         for t in range(len(Buffer[j])): # a recursive algorithm might have been a better option
@@ -144,7 +147,10 @@ class Console:
                                 if str(float(Buffer[j][t])) == Buffer[j][t]:
                                     Buffer[j][t] = float(Buffer[j][t])
                             except ValueError:
-                                Buffer[j][t] = str(Buffer[j][t])
+                                if str(Buffer[j][t]) != 'None':
+                                    Buffer[j][t] = str(Buffer[j][t])
+                                else:
+                                    Buffer[j][t] = None
                         Buffer[j] = tuple(Buffer[j])
 
                 # formating is done, let's head over to the execution
